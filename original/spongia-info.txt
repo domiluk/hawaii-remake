@@ -1,0 +1,18 @@
+nazov tímu: DL games
+programovací jazyk: C
+OS:windows
+
+grafika: 
+všetkú grafiku sme robili sami
+
+zvuk:
+dray.wav
+spring.wav
+main.wav
+
+stiahnuté z internetu
+
+fonty:
+airstream.ttf 
+
+stiahnuté z internetu
