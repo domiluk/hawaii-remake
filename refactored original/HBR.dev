@@ -10,7 +10,7 @@ Libs=
 PrivateResource=
 ResourceIncludes=
 MakeIncludes=
-Compiler=
+Compiler=-std=c99_@@_
 CppCompiler=
 Linker=-lalfont_@@_-lalleg_@@_-lm_@@_
 IsCpp=0
