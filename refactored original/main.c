@@ -193,7 +193,7 @@ int main()
   install_mouse();
   install_timer();
   set_color_depth(desktop_color_depth());
-  set_gfx_mode(1, 1024, 768, 0, 0);
+  set_gfx_mode(GFX_AUTODETECT_WINDOWED, 1024, 768, 0, 0);
   install_sound(DIGI_AUTODETECT, MIDI_NONE, NULL);
   srand(time(NULL));
   calc_AI();
