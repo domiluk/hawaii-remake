@@ -3,8 +3,8 @@
 #include <math.h>
 #include <stdio.h>
 
-#define MODE_MP 0
-#define MODE_CARRIER 1
+#define MODE_MULTIPLAYER 0
+#define MODE_CAREER 1
 #define MODE_PRACTICE 2
 
 void rotate(BITMAP *bmp, BITMAP *tmp, float angle);
@@ -204,7 +204,7 @@ int main()
   mb = create_bitmap(SCREEN_W, SCREEN_H);
   vsetko = create_bitmap(2100, 1900);
 
-  // game_mode = MODE_MP;
+  // game_mode = MODE_MULTIPLAYER;
 
   player1.x = 996 - 100;
   player1.y = 1025 - 100;
@@ -354,16 +354,16 @@ play_menu:
 
     if (mouse_x > 100 && mouse_y > 340 && mouse_x < 306 && mouse_y < 390)
     {
-      alfont_textprintf_centre_aa(mb, pump, 206, 357, 0xFFFFFF, "Carrier");
+      alfont_textprintf_centre_aa(mb, pump, 206, 357, 0xFFFFFF, "Career");
       if (mouse_b & 1)
       {
-        game_mode = MODE_CARRIER;
+        game_mode = MODE_CAREER;
         install_int(mooove_time, 1000);
         goto game;
       }
     }
     else
-      alfont_textprintf_centre_aa(mb, pump, 206, 357, 0, "Carrier");
+      alfont_textprintf_centre_aa(mb, pump, 206, 357, 0, "Career");
 
     if (mouse_x > 100 && mouse_y > 390 && mouse_x < 306 && mouse_y < 440)
     {
@@ -383,7 +383,7 @@ play_menu:
       alfont_textprintf_centre_aa(mb, pump, 206, 437, 0xFFFFFF, "Multiplayer");
       if (mouse_b & 1)
       {
-        game_mode = MODE_MP;
+        game_mode = MODE_MULTIPLAYER;
         install_int(mooove_time, 1000);
         goto game;
       }
@@ -618,9 +618,9 @@ game:
   {
 
     rotate(wp, bc, player1.rot);
-    int rx, ry, gx, gy;
-    for (rx = 0; rx < bc->w; rx++)
-      for (ry = 0; ry < bc->h; ry++)
+    int gx, gy;
+    for (int rx = 0; rx < bc->w; rx++)
+      for (int ry = 0; ry < bc->h; ry++)
       {
         if (getr(getpixel(bc, rx, ry)) == 254)
         {
@@ -728,12 +728,12 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
       }
     }
 
-    if (game_mode == MODE_MP)
+    if (game_mode == MODE_MULTIPLAYER)
     {
       rotate(wp, bc, player2.rot);
-      // int rx, ry, gx, gy;
-      for (rx = 0; rx < bc->w; rx++)
-        for (ry = 0; ry < bc->h; ry++)
+
+      for (int rx = 0; rx < bc->w; rx++)
+        for (int ry = 0; ry < bc->h; ry++)
         {
           if (getr(getpixel(bc, rx, ry)) == 254)
           {
@@ -836,14 +836,14 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
           player2.rot += player2.rotate;
         }
       }
-    } // if mode = MODE_MP
+    } // if mode = MODE_MULTIPLAYER
 
     // lava polka
 
     // camleft1 = boat.x - 256;
     // camup1 = boat.y - 384;
-    // if(key[KEY_P])game_mode = MODE_CARRIER;
-    if (game_mode == MODE_MP)
+    // if(key[KEY_P])game_mode = MODE_CAREER;
+    if (game_mode == MODE_MULTIPLAYER)
     {
       camleft1 = player1.x - 256;
       camup1 = player1.y - 384;
@@ -881,7 +881,7 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
       blit(vsetko, mb, camleft2, camup2, 512, 0, 512, 768);
       vline(mb, 512, 0, 768, makecol(rand() % 255, 0, 0));
     }
-    if (game_mode == MODE_PRACTICE || game_mode == MODE_CARRIER)
+    if (game_mode == MODE_PRACTICE || game_mode == MODE_CAREER)
     {
       camleft1 = player1.x - 512;
       camup1 = player1.y - 384;
@@ -898,7 +898,7 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
       draw_sprite(mb, player1.bmp_rot, player1.x - camleft1, player1.y - camup1);
     }
 
-    if (game_mode == MODE_CARRIER)
+    if (game_mode == MODE_CAREER)
     {
       player2.x = getAI_x(AI_pos);
       player2.y = getAI_y(AI_pos);
@@ -921,12 +921,13 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
     }
     // rest(40);
 
-    if (abs((player1.x - player2.x) * (player1.x - player2.x)) + abs((player1.y - player2.y) * (player1.y - player2.y)) <= 90 * 90)
+    int boats_distance_less_than_90 = ((player1.x - player2.x) * (player1.x - player2.x)) + ((player1.y - player2.y) * (player1.y - player2.y)) <= 90 * 90;
+    if (boats_distance_less_than_90)
     {
       // boat.xv = -getAI_xres(AI_pos)/3;
       // boat.yv = getAI_yres(AI_pos)/3;
       play_sample(spring, 255, 128, 1000, 0);
-      if (game_mode == MODE_MP)
+      if (game_mode == MODE_MULTIPLAYER)
       {
         float root;
         root = player1.rot;
@@ -941,7 +942,7 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
         player1.yv = player2.yv;
         player2.yv = root;
       }
-      if (game_mode == MODE_CARRIER)
+      if (game_mode == MODE_CAREER)
       {
         player1.xv = cos(getAI_rot(AI_pos) / 360 * 2 * 3.1415926535) * 5;
         player1.yv = sin(getAI_rot(AI_pos) / 360 * 2 * 3.1415926535) * 5;
@@ -955,7 +956,7 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
       // calc_AI();
     }
 
-    if (game_mode == MODE_CARRIER)
+    if (game_mode == MODE_CAREER)
     {
       AI_pos += 3;
       if (AI_pos == npts - 1)
@@ -977,7 +978,7 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
     alfont_textprintf_aa(mb, pump, 20, 10, 0, "Laps %d", player1.round);
     alfont_textprintf_aa(mb, pump, 20, 40, 0, "Last lap time %d:%d", player1.last_lap_min, player1.last_lap_sec);
     alfont_textprintf_aa(mb, pump, 20, 70, 0, "Best lap time %d:%d", player1.best_lap_min, player1.best_lap_sec);
-    if (game_mode == MODE_MP)
+    if (game_mode == MODE_MULTIPLAYER)
     {
       alfont_textprintf_aa(mb, pump, 810, 10, 0, "Laps %d", player2.round);
       alfont_textprintf_aa(mb, pump, 810, 40, 0, "Last lap time %d:%d", player2.last_lap_min, player2.last_lap_sec);
