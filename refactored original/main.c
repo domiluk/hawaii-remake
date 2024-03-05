@@ -7,18 +7,17 @@
 #define MODE_CAREER 1
 #define MODE_PRACTICE 2
 
-#define DEG_TO_RADS 0.01745329252
-#define RADS_TO_DEG 57.2957795147
+#define DEG_TO_RADS 0.01745329252 // just multiply your degrees by this constant
+#define RADS_TO_DEG 57.2957795147 // just multiply your radians by this constant
 
 void rotate(BITMAP *bmp, BITMAP *tmp, float angle);
 
 int camup1 = 0, camup2 = 0, camleft2 = 0, camleft1 = 0;
 BITMAP *ostrov, *vsetko;
 BITMAP *alpha;
-BITMAP *bc, *wp;
+BITMAP *white_point_bmp, *rotated_white_point_bmp;
 BITMAP *panel;
 SAMPLE *dray, *spring, *main_sample;
-int AI_pos = 0;
 int game_mode;
 int global_sec;
 int global_min;
@@ -37,9 +36,9 @@ typedef struct boat
   float speedup;
   float slowdown;
   int round;
-  int cp_one;
-  int cp_two;
-  int cp_three;
+  int checkpoint_one;
+  int checkpoint_two;
+  int checkpoint_three;
   int last_lap_sec;
   int best_lap_sec;
   int last_lap_min;
@@ -53,6 +52,7 @@ BOAT player1, player2;
 BITMAP *mb, *menu;
 
 // BITMAP *boat, *ms, *boatr;
+int AI_pos = 0;
 int npts = 50;
 int xpos[100 * 26];
 int ypos[100 * 26];
@@ -183,6 +183,7 @@ void mooove_time()
 ALFONT_FONT *pump;
 int main()
 {
+  srand(time(NULL));
   allegro_init();
   alfont_init();
   install_keyboard();
@@ -191,22 +192,21 @@ int main()
   set_color_depth(desktop_color_depth());
   set_gfx_mode(GFX_AUTODETECT_WINDOWED, 1024, 768, 0, 0);
   install_sound(DIGI_AUTODETECT, MIDI_NONE, NULL);
-  srand(time(NULL));
-  calc_AI();
   alfont_text_mode(-1);
+
+  calc_AI();
 
   pump = alfont_load_font("airstream.ttf");
 
   mb = create_bitmap(SCREEN_W, SCREEN_H);
   vsetko = create_bitmap(2100, 1900);
 
-  // game_mode = MODE_MULTIPLAYER;
-
   player1.x = 996 - 100;
   player1.y = 1025 - 100;
   player1.round = 0;
-  player1.cp_one = 0;
-  player1.cp_two = 0;
+  player1.checkpoint_one = 0;
+  player1.checkpoint_two = 0;
+  player1.checkpoint_three = 0;
   player1.xv = 0;
   player1.yv = 0;
   player1.rot = -50;
@@ -222,8 +222,9 @@ int main()
   player2.x = 1105 - 100;
   player2.y = 1087 - 100;
   player2.round = 0;
-  player2.cp_one = 0;
-  player2.cp_two = 0;
+  player2.checkpoint_one = 0;
+  player2.checkpoint_two = 0;
+  player2.checkpoint_three = 0;
   player2.xv = 0;
   player2.yv = 0;
   player2.rot = -75;
@@ -236,13 +237,13 @@ int main()
   player2.slowdown = 0.08;
   player2.rotate = 1.5;
 
-  // boat.speed = 5.0;
+  white_point_bmp = create_bitmap(100, 100);
+  clear_bitmap(white_point_bmp);
+  putpixel(white_point_bmp, 97, 50, makecol(254, 255, 255));
+  putpixel(white_point_bmp, 96, 50, makecol(254, 255, 255));
 
-  bc = create_bitmap(100, 100);
-  wp = create_bitmap(100, 100);
-  putpixel(wp, 97, 50, makecol(254, 255, 255));
-  putpixel(wp, 96, 50, makecol(254, 255, 255));
-  putpixel(bc, 97, 50, makecol(254, 255, 255));
+  rotated_white_point_bmp = create_bitmap(100, 100);
+  clear_bitmap(rotated_white_point_bmp);
 
   player1.bmp = load_bitmap("lodcervena.bmp", NULL);
   player1.bmp_rot = load_bitmap("lodcervena.bmp", NULL);
@@ -613,44 +614,45 @@ game:
   while (!key[KEY_ESC])
   {
 
-    rotate(wp, bc, player1.rot);
-    int gx, gy;
-    for (int rx = 0; rx < bc->w; rx++)
-      for (int ry = 0; ry < bc->h; ry++)
+    rotate(white_point_bmp, rotated_white_point_bmp, player1.rot);
+    int boat_front_x, boat_front_y;
+    for (int rx = 0; rx < rotated_white_point_bmp->w; rx++)
+      for (int ry = 0; ry < rotated_white_point_bmp->h; ry++)
       {
-        if (getr(getpixel(bc, rx, ry)) == 254)
+        if (getr(getpixel(rotated_white_point_bmp, rx, ry)) == 254)
         {
-          gx = rx;
-          gy = ry;
+          boat_front_x = rx;
+          boat_front_y = ry;
         }
       }
 
-    if (getr(getpixel(alpha, player1.x + gx, player1.y + gy)) == 0)
-    {
-      /*boat.x -= cos(boat.rot* DEG_TO_RADS)*boat.xv;
-boat.y -= sin(boat.rot* DEG_TO_RADS)*boat.yv;*/
+    int boat_front_point_color = getr(getpixel(alpha, player1.x + boat_front_x, player1.y + boat_front_y));
 
+    int player1_hit_the_land = boat_front_point_color == 0;
+    if (player1_hit_the_land)
+    {
       player1.xv *= -0.75;
       player1.yv *= -0.75;
     }
 
-    if (getr(getpixel(alpha, player1.x + gx, player1.y + gy)) == 64)
+    int player1_hit_checkpoint_one = boat_front_point_color == 64;
+    if (player1_hit_checkpoint_one)
+      player1.checkpoint_one = 1;
+
+    int player1_hit_checkpoint_two = boat_front_point_color == 128;
+    if (player1_hit_checkpoint_two)
+      player1.checkpoint_two = 1;
+
+    int player1_hit_checkpoint_three = boat_front_point_color == 32;
+    if (player1_hit_checkpoint_three)
+      player1.checkpoint_three = 1;
+
+    int player1_hit_finish_line = boat_front_point_color == 192;
+    if (player1_hit_finish_line && player1.checkpoint_one && player1.checkpoint_two && player1.checkpoint_three)
     {
-      player1.cp_one = 1;
-    }
-    if (getr(getpixel(alpha, player1.x + gx, player1.y + gy)) == 128)
-    {
-      player1.cp_two = 1;
-    }
-    if (getr(getpixel(alpha, player1.x + gx, player1.y + gy)) == 32)
-    {
-      player1.cp_three = 1;
-    }
-    if (getr(getpixel(alpha, player1.x + gx, player1.y + gy)) == 192 && player1.cp_one == 1 && player1.cp_two == 1 && player1.cp_three == 1)
-    {
-      player1.cp_one = 0;
-      player1.cp_two = 0;
-      player1.cp_three = 0;
+      player1.checkpoint_one = 0;
+      player1.checkpoint_two = 0;
+      player1.checkpoint_three = 0;
       player1.last_lap_sec = global_sec - player1.last_lap_sec;
       player1.last_lap_min = global_min - player1.last_lap_min;
       if (player1.last_lap_sec < 0)
@@ -667,7 +669,7 @@ boat.y -= sin(boat.rot* DEG_TO_RADS)*boat.yv;*/
       play_sample(dray, 255, 128, 1000, 0);
     }
 
-    if (key[KEY_UP]) // && getr(getpixel(alpha,boat.x + gx, boat.y + gy)) == 255)
+    if (key[KEY_UP]) // && getr(getpixel(alpha,boat.x + boat_front_x, boat.y + boat_front_y)) == 255)
     {
       player1.x += cos(player1.rot * DEG_TO_RADS) * player1.xv;
       player1.y += sin(player1.rot * DEG_TO_RADS) * player1.yv;
@@ -726,41 +728,41 @@ boat.y -= sin(boat.rot* DEG_TO_RADS)*boat.yv;*/
 
     if (game_mode == MODE_MULTIPLAYER)
     {
-      rotate(wp, bc, player2.rot);
+      rotate(white_point_bmp, rotated_white_point_bmp, player2.rot);
 
-      for (int rx = 0; rx < bc->w; rx++)
-        for (int ry = 0; ry < bc->h; ry++)
+      for (int rx = 0; rx < rotated_white_point_bmp->w; rx++)
+        for (int ry = 0; ry < rotated_white_point_bmp->h; ry++)
         {
-          if (getr(getpixel(bc, rx, ry)) == 254)
+          if (getr(getpixel(rotated_white_point_bmp, rx, ry)) == 254)
           {
-            gx = rx;
-            gy = ry;
+            boat_front_x = rx;
+            boat_front_y = ry;
           }
         }
 
-      if (getr(getpixel(alpha, player2.x + gx, player2.y + gy)) == 0)
+      if (getr(getpixel(alpha, player2.x + boat_front_x, player2.y + boat_front_y)) == 0)
       {
         player2.xv *= -0.75;
         player2.yv *= -0.75;
       }
 
-      if (getr(getpixel(alpha, player2.x + gx, player2.y + gy)) == 64)
+      if (getr(getpixel(alpha, player2.x + boat_front_x, player2.y + boat_front_y)) == 64)
       {
-        player2.cp_one = 1;
+        player2.checkpoint_one = 1;
       }
-      if (getr(getpixel(alpha, player2.x + gx, player2.y + gy)) == 128)
+      if (getr(getpixel(alpha, player2.x + boat_front_x, player2.y + boat_front_y)) == 128)
       {
-        player2.cp_two = 1;
+        player2.checkpoint_two = 1;
       }
-      if (getr(getpixel(alpha, player2.x + gx, player2.y + gy)) == 32)
+      if (getr(getpixel(alpha, player2.x + boat_front_x, player2.y + boat_front_y)) == 32)
       {
-        player2.cp_three = 1;
+        player2.checkpoint_three = 1;
       }
-      if (getr(getpixel(alpha, player2.x + gx, player2.y + gy)) == 192 && player2.cp_one == 1 && player2.cp_two == 1 && player2.cp_three == 1)
+      if (getr(getpixel(alpha, player2.x + boat_front_x, player2.y + boat_front_y)) == 192 && player2.checkpoint_one == 1 && player2.checkpoint_two == 1 && player2.checkpoint_three == 1)
       {
-        player2.cp_one = 0;
-        player2.cp_two = 0;
-        player2.cp_three = 0;
+        player2.checkpoint_one = 0;
+        player2.checkpoint_two = 0;
+        player2.checkpoint_three = 0;
         player2.last_lap_sec = global_sec - player2.last_lap_sec;
         player2.last_lap_min = global_min - player2.last_lap_min;
         if (player2.last_lap_sec < 0)
@@ -776,7 +778,7 @@ boat.y -= sin(boat.rot* DEG_TO_RADS)*boat.yv;*/
         player2.round++;
       }
 
-      if (key[KEY_W]) // && getr(getpixel(alpha,boat.x + gx, boat.y + gy)) == 255)
+      if (key[KEY_W]) // && getr(getpixel(alpha,boat.x + boat_front_x, boat.y + boat_front_y)) == 255)
       {
         player2.x += cos(player2.rot * DEG_TO_RADS) * player2.xv;
         player2.y += sin(player2.rot * DEG_TO_RADS) * player2.yv;
@@ -889,6 +891,10 @@ boat.y -= sin(boat.rot* DEG_TO_RADS)*boat.yv;*/
       blit(ostrov, mb, camleft1, camup1, 0, 0, camleft1 + 1024, camup1 + 768);
       rotate(player1.bmp, player1.bmp_rot, player1.rot + 90);
       draw_sprite(mb, player1.bmp_rot, player1.x - camleft1, player1.y - camup1);
+      // /* REFACTOR: ATTEMPT TO UNDERSTAND white_point_bmp and rotated_white_point_bmp */
+      // blit(white_point_bmp, mb, 0, 0, 300, 300, 100, 100);
+      // blit(rotated_white_point_bmp, mb, 0, 0, 500, 300, 100, 100);
+      // /* /END */
     }
 
     if (game_mode == MODE_CAREER)
