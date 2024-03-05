@@ -55,7 +55,7 @@ int xs[100 + 1];
 int ys[100 + 1];
 int xpos[100 * 26];
 int ypos[100 * 26];
-int curspl = 0, curpt = 0, ptbx = 0, ptby = 0;
+int curspl = 0, curpt = 0;
 float beta;
 int endofgame = 0;
 float xres, yres;
@@ -838,13 +838,9 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
       }
     } // if mode = MODE_MULTIPLAYER
 
-    // lava polka
-
-    // camleft1 = boat.x - 256;
-    // camup1 = boat.y - 384;
-    // if(key[KEY_P])game_mode = MODE_CAREER;
     if (game_mode == MODE_MULTIPLAYER)
     {
+      // lava polka obrazovky
       camleft1 = player1.x - 256;
       camup1 = player1.y - 384;
 
@@ -858,11 +854,10 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
         camleft1 = ostrov->w - 1024 + 512;
       // 1536       1024
       blit(ostrov, vsetko, 0, 0, 0, 0, 2100, 1900);
-      // blit(ostrov,vsetko,camleft1,camup1,0,0,camleft1+1024,camup1+768);
       rotate(player1.bmp, player1.bmp_rot, player1.rot + 90);
       draw_sprite(vsetko, player1.bmp_rot, player1.x, player1.y);
-      // vykreslenie pravej polky
 
+      // prava polka obrazovky
       camleft2 = player2.x - 256;
       camup2 = player2.y - 384;
 
@@ -877,6 +872,8 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
 
       rotate(player2.bmp, player2.bmp_rot, player2.rot + 90);
       draw_sprite(vsetko, player2.bmp_rot, player2.x, player2.y);
+
+      // vykresli lavu a pravu polku z bitmapy vsetko
       blit(vsetko, mb, camleft1, camup1, 0, 0, 512, 768);
       blit(vsetko, mb, camleft2, camup2, 512, 0, 512, 768);
       vline(mb, 512, 0, 768, makecol(rand() % 255, 0, 0));
@@ -929,18 +926,18 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
       play_sample(spring, 255, 128, 1000, 0);
       if (game_mode == MODE_MULTIPLAYER)
       {
-        float root;
-        root = player1.rot;
+        float temp;
+        temp = player1.rot;
         player1.rot = player2.rot;
-        player2.rot = root;
+        player2.rot = temp;
 
-        root = player1.xv;
+        temp = player1.xv;
         player1.xv = player2.xv;
-        player2.xv = root;
+        player2.xv = temp;
 
-        root = player1.yv;
+        temp = player1.yv;
         player1.yv = player2.yv;
-        player2.yv = root;
+        player2.yv = temp;
       }
       if (game_mode == MODE_CAREER)
       {
