@@ -17,7 +17,7 @@ BITMAP *ostrov, *vsetko;
 BITMAP *alpha;
 BITMAP *white_point_bmp, *rotated_white_point_bmp;
 BITMAP *panel;
-SAMPLE *dray, *spring, *main_sample;
+SAMPLE *lap_gong, *spring, *main_sample;
 int game_mode;
 int global_sec;
 int global_min;
@@ -253,7 +253,7 @@ int main()
   alpha = load_bitmap("alpha1.bmp", NULL);
   menu = load_bitmap("menu.bmp", NULL);
   panel = load_bitmap("panel.bmp", NULL);
-  dray = load_sample("sounds/dray.wav");
+  lap_gong = load_sample("sounds/dray.wav");
   spring = load_sample("sounds/spring.wav");
   main_sample = load_sample("main.wav");
 
@@ -666,7 +666,7 @@ game:
         player1.best_lap_min = player1.last_lap_min;
       }
       player1.round++;
-      play_sample(dray, 255, 128, 1000, 0);
+      play_sample(lap_gong, 255, 128, 1000, 0);
     }
 
     if (key[KEY_UP]) // && getr(getpixel(alpha,boat.x + boat_front_x, boat.y + boat_front_y)) == 255)
@@ -740,25 +740,29 @@ game:
           }
         }
 
-      if (getr(getpixel(alpha, player2.x + boat_front_x, player2.y + boat_front_y)) == 0)
+      boat_front_point_color = getr(getpixel(alpha, player2.x + boat_front_x, player2.y + boat_front_y));
+
+      int player2_hit_the_land = boat_front_point_color == 0;
+      if (player2_hit_the_land)
       {
         player2.xv *= -0.75;
         player2.yv *= -0.75;
       }
 
-      if (getr(getpixel(alpha, player2.x + boat_front_x, player2.y + boat_front_y)) == 64)
-      {
+      int player2_hit_checkpoint_one = boat_front_point_color == 64;
+      if (player2_hit_checkpoint_one)
         player2.checkpoint_one = 1;
-      }
-      if (getr(getpixel(alpha, player2.x + boat_front_x, player2.y + boat_front_y)) == 128)
-      {
+
+      int player2_hit_checkpoint_two = boat_front_point_color == 128;
+      if (player2_hit_checkpoint_two)
         player2.checkpoint_two = 1;
-      }
-      if (getr(getpixel(alpha, player2.x + boat_front_x, player2.y + boat_front_y)) == 32)
-      {
+
+      int player2_hit_checkpoint_three = boat_front_point_color == 32;
+      if (player2_hit_checkpoint_three)
         player2.checkpoint_three = 1;
-      }
-      if (getr(getpixel(alpha, player2.x + boat_front_x, player2.y + boat_front_y)) == 192 && player2.checkpoint_one == 1 && player2.checkpoint_two == 1 && player2.checkpoint_three == 1)
+
+      int player2_hit_finish_line = boat_front_point_color == 192;
+      if (player2_hit_finish_line && player2.checkpoint_one && player2.checkpoint_two && player2.checkpoint_three)
       {
         player2.checkpoint_one = 0;
         player2.checkpoint_two = 0;
@@ -776,6 +780,7 @@ game:
           player2.best_lap_min = player2.last_lap_min;
         }
         player2.round++;
+        play_sample(lap_gong, 255, 128, 1000, 0);
       }
 
       if (key[KEY_W]) // && getr(getpixel(alpha,boat.x + boat_front_x, boat.y + boat_front_y)) == 255)
