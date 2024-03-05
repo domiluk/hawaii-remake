@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include "allegro.h"
 
-#define scw (SCREEN_W/2)
-#define sch (SCREEN_H/2)
+#define scw (SCREEN_W / 2)
+#define sch (SCREEN_H / 2)
+#define DEG_TO_RADS 0.01745329252 // pi / 180
 
 typedef struct trgb
 {
@@ -11,190 +12,90 @@ typedef struct trgb
   int b;
 } trgb;
 
-
+// i - interpolation parameter. has to be between 0 and 1
 trgb gra(trgb c1, trgb c2, float i)
 {
- trgb c;
+  trgb c;
 
- c.r = c1.r * (1-i) + c2.r * (i);
- c.g = c1.g * (1-i) + c2.g * (i);
- c.b = c1.b * (1-i) + c2.b * (i);
+  c.r = c1.r * (1 - i) + c2.r * (i);
+  c.g = c1.g * (1 - i) + c2.g * (i);
+  c.b = c1.b * (1 - i) + c2.b * (i);
 
- return c;
+  return c;
 }
 
-
-/*trgb grad(trgb col1, trgb col2, int index, int max)
+void rot(int x, int y, int center_x, int center_y, float angle_in_rads, float *rx, float *ry)
 {
-  trgb col;  
-  float
-  r1,g1,b1,
-  r2,g2,b2,
-  rr,rg,rb,
-  mx,indx;
+  float tx = x - center_x;
+  float ty = y - center_y;
 
-  r1=col1.r; g1=col1.g; b1=col1.b;
-  r2=col2.r; g2=col2.g; b2=col2.b;
-  mx=max; indx=index;
+  float cosine = cos(angle_in_rads);
+  float sine = sin(angle_in_rads);
 
-    if (r1>r2)  rr = r1 - ( (r1-r2) / mx * indx );
-    if (r1<r2)  rr = r1 + ( (r2-r1) / mx * indx );
-    if (r1==r2) rr = r2;
+  float mx = tx * cosine - ty * sine;
+  float my = tx * sine + ty * cosine;
 
-    if (g1>g2)  rg = g1 - ( (g1-g2) / mx * indx );
-    if (g1<g2)  rg = g1 + ( (g2-g1) / mx * indx );
-    if (g1==g2) rg = g2;
-
-    if (b1>b2)  rb = b1 - ( (b1-b2) / mx * indx );
-    if (b1<b2)  rb = b1 + ( (b2-b1) / mx * indx );
-    if (b1==b2) rb = b2;
-
-  if (indx!=0 && indx!=mx)
-  {
-   col.r=rr;
-   col.g=rg;
-   col.b=rb;
-  } else
-  {
-     if (indx==0)
-     {
-       col.r=col1.r;
-       col.g=col1.g;
-       col.b=col1.b;
-     }
-     if (indx==mx)
-     {
-       col.r=col2.r;
-       col.g=col2.g;
-       col.b=col2.b;
-     }
-  }
-
-  return col;
-}*/
-
-
-
-
-void rot(int x,int y,int cx,int cy,float cosine,float sine,float *rx, float *ry)
-{
- float tx,ty;
- float mx,my;
-
-tx=x-cx; ty=y-cy;
-//tx = x;
-//ty = y;
-
-mx=tx*cosine - ty*sine;
-my=tx*sine   + ty*cosine;
-
- *rx=mx+cx;
- *ry=my+cy;
+  *rx = mx + center_x;
+  *ry = my + center_y;
 }
 
-void rotate(BITMAP* bmp,  BITMAP* tmp,float angle)
+void rotate(BITMAP *bmp, BITMAP *tmp, float angle)
 {
+  int w = bmp->w;
+  int h = bmp->h;
 
+  clear_to_color(tmp, makecol(255, 0, 255));
 
- int i,j,x,y;
- float sine,cosine;
- float rx,ry;
- int w,h;
+  float angle_in_rads = -angle * DEG_TO_RADS;
 
- trgb p1,p2,p3,p4,hore,dole,p;
- int p1_,p2_,p3_,p4_;
+  for (int i = 0; i < w; i++)
+    for (int j = 0; j < h; j++)
+    {
+      float rx, ry;
+      rot(i, j, w / 2, h / 2, angle_in_rads, &rx, &ry);
 
-
-
- w=bmp->w;
- h=bmp->h;
- 
- clear_to_color(tmp,makecol(255,0,255));
- //tmp = create_bitmap(w,h);
- //blit(bmp,tmp,0,0,0,0,w,h);
- 
- sine=sin(-angle*0.01745329252);
- cosine=cos(-angle*0.01745329252); 
-
-
- for (i=0; i<w; i++)
- for (j=0; j<h; j++)
- {
-
-  rot(i,j,w/2,h/2,cosine,sine,&rx,&ry);
-
-  //s AA
- /* x=(int)rx;
-  y=(int)ry;
-
-  p1_=getpixel(tmp,x  ,y  ); 
-  p2_=getpixel(tmp,x+1,y  ); 
-  p3_=getpixel(tmp,x+1,y+1); 
-  p4_=getpixel(tmp,x  ,y+1); 
-
-  p1.r=getr(p1_); p1.g=getg(p1_); p1.b=getb(p1_);
-  p2.r=getr(p2_); p2.g=getg(p2_); p2.b=getb(p2_);
-  p3.r=getr(p3_); p3.g=getg(p3_); p3.b=getb(p3_);
-  p4.r=getr(p4_); p4.g=getg(p4_); p4.b=getb(p4_);
-
-  hore=gra(p1,p2, rx-x);
-  dole=gra(p4,p3, rx-x);
-
-  p=gra(hore,dole,ry-y);
-
-  putpixel(bmp,i,j,makecol(p.r,p.g,p.b));*/
-  
-
-  //bez AA
-  if(rx < 0 || ry < 0 || rx > w - 1 || ry > h-1)putpixel(tmp,i,j,makecol(255,0,255));
-  else
-  putpixel(tmp,i,j,getpixel( bmp,(int)rx,(int)ry ));
-
- }
- 
+      if (rx < 0 || ry < 0 || rx > w - 1 || ry > h - 1)
+        putpixel(tmp, i, j, makecol(255, 0, 255));
+      else
+        putpixel(tmp, i, j, getpixel(bmp, (int)rx, (int)ry));
+    }
 }
 
-
-
-
-/*int main()
+// NOTE: this was dead code, it's not yet ready for use
+// Note that the getpixel/putpixel in this version has swapped bitmaps
+void rotate_antialiased(BITMAP *bmp, BITMAP *tmp, float angle)
 {
- int m,i,j;
- BITMAP* bmp;
- BITMAP* bmp2;
- float a;
+  int w = bmp->w;
+  int h = bmp->h;
 
- int x,y,old_x,old_y;
+  clear_to_color(tmp, makecol(255, 0, 255));
 
- allegro_init();
- install_keyboard();
+  float angle_in_rads = -angle * DEG_TO_RADS;
 
- set_color_depth(32);
- if (set_gfx_mode(GFX_AUTODETECT_FULLSCREEN, 640, 480, 0, 0)!=0)
- {
-   set_gfx_mode(GFX_TEXT,0,0,0,0);
-   allegro_message("Error: %s",allegro_error);
-   return 1;
- }
+  for (int i = 0; i < w; i++)
+    for (int j = 0; j < h; j++)
+    {
+      float rx, ry;
+      rot(i, j, w / 2, h / 2, angle_in_rads, &rx, &ry);
 
- clear_to_color(screen, makecol(0,0,50));
+      int x = (int)rx;
+      int y = (int)ry;
 
- bmp2= load_bitmap("s3.bmp",NULL); ;
- bmp = load_bitmap("s3.bmp",NULL); ;
+      int p1_ = getpixel(tmp, x, y);
+      int p2_ = getpixel(tmp, x + 1, y);
+      int p3_ = getpixel(tmp, x + 1, y + 1);
+      int p4_ = getpixel(tmp, x, y + 1);
 
- while (!keypressed())
- {
-   a=a+1; if (a>=360) a=a-360;
+      trgb p1 = {.r = getr(p1_), .g = getg(p1_), .b = getb(p1_)};
+      trgb p2 = {.r = getr(p2_), .g = getg(p2_), .b = getb(p2_)};
+      trgb p3 = {.r = getr(p3_), .g = getg(p3_), .b = getb(p3_)};
+      trgb p4 = {.r = getr(p4_), .g = getg(p4_), .b = getb(p4_)};
 
-   blit(bmp2,bmp,0,0,0,0,bmp->w,bmp->h);   
+      trgb hore = gra(p1, p2, rx - x);
+      trgb dole = gra(p4, p3, rx - x);
 
-   rotate(bmp,a);
-   blit(bmp,screen,0,0,0,0,bmp->w,bmp->h);
-   rest(10);
- }
+      trgb p = gra(hore, dole, ry - y);
 
- destroy_bitmap(bmp);
-
- return 0;
+      putpixel(bmp, i, j, makecol(p.r, p.g, p.b));
+    }
 }
-END_OF_MAIN();*/
