@@ -1,5 +1,5 @@
-#include <stdio.h>
-#include "allegro.h"
+#include <math.h>
+#include <allegro.h>
 
 #define scw (SCREEN_W / 2)
 #define sch (SCREEN_H / 2)

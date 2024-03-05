@@ -1,7 +1,7 @@
 [Project]
 FileName=HBR.dev
 Name=HBR
-UnitCount=1
+UnitCount=2
 Type=1
 Ver=1
 ObjFiles=
@@ -56,4 +56,14 @@ OriginalFilename=
 ProductName=
 ProductVersion=
 AutoIncBuildNr=0
+
+[Unit2]
+FileName=rotate.c
+CompileCpp=0
+Folder=HBR
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
 
