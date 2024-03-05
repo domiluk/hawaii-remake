@@ -21,7 +21,9 @@ SAMPLE *lap_gong, *spring, *main_sample;
 int game_mode;
 int global_sec;
 int global_min;
-int res = 0, depth = 16, vol = 255, nlaps = 3, colb = 0, cols = 1;
+
+// these are set in options, never used anyway and never stored to a file or read from a file
+int res = 0, depth = 16, vol = 255, nlaps = 3, player1_boat_color = 0, player2_boat_color = 1;
 int winning_laps = 3;
 
 typedef struct boat
@@ -35,7 +37,7 @@ typedef struct boat
   float maxspeed;
   float speedup;
   float slowdown;
-  int round;
+  int laps;
   int checkpoint_one;
   int checkpoint_two;
   int checkpoint_three;
@@ -203,7 +205,7 @@ int main()
 
   player1.x = 996 - 100;
   player1.y = 1025 - 100;
-  player1.round = 0;
+  player1.laps = 0;
   player1.checkpoint_one = 0;
   player1.checkpoint_two = 0;
   player1.checkpoint_three = 0;
@@ -221,7 +223,7 @@ int main()
 
   player2.x = 1105 - 100;
   player2.y = 1087 - 100;
-  player2.round = 0;
+  player2.laps = 0;
   player2.checkpoint_one = 0;
   player2.checkpoint_two = 0;
   player2.checkpoint_three = 0;
@@ -400,7 +402,7 @@ credits_menu: //////////////////////////////////////////////credits
     show_mouse(NULL);
     blit(menu, mb, 0, 0, 0, 0, 1024, 768);
     alfont_set_font_size(pump, 50);
-    // ply ext
+
     if (mouse_x > 162 && mouse_y > 588 && mouse_x < 258 && mouse_y < 657)
     {
       alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
@@ -420,7 +422,7 @@ credits_menu: //////////////////////////////////////////////credits
       alfont_textprintf_centre_aa(mb, pump, 707, 608, 0, "Exit");
 
     alfont_set_font_size(pump, 35);
-    // opt crd
+
     if (mouse_x > 312 && mouse_y > 597 && mouse_x < 404 && mouse_y < 654)
     {
       alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
@@ -450,7 +452,7 @@ options_menu:
     show_mouse(NULL);
     blit(menu, mb, 0, 0, 0, 0, 1024, 768);
     alfont_set_font_size(pump, 50);
-    // ply ext
+
     if (mouse_x > 162 && mouse_y > 588 && mouse_x < 258 && mouse_y < 657)
     {
       alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
@@ -470,7 +472,7 @@ options_menu:
       alfont_textprintf_centre_aa(mb, pump, 707, 608, 0, "Exit");
 
     alfont_set_font_size(pump, 35);
-    // opt crd
+
     alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
 
     if (mouse_x > 546 && mouse_y > 597 && mouse_x < 635 && mouse_y < 656)
@@ -536,17 +538,17 @@ options_menu:
     if (mouse_x > 880 && mouse_x < 900 && mouse_y > 60 && mouse_y < 80 && mouse_b & 1)
       nlaps = 7;
     if (mouse_x > 800 && mouse_x < 820 && mouse_y > 90 && mouse_y < 110 && mouse_b & 1)
-      colb = 0;
+      player1_boat_color = 0;
     if (mouse_x > 800 && mouse_x < 820 && mouse_y > 120 && mouse_y < 140 && mouse_b & 1)
-      colb = 1;
+      player1_boat_color = 1;
     if (mouse_x > 800 && mouse_x < 820 && mouse_y > 150 && mouse_y < 170 && mouse_b & 1)
-      colb = 2;
+      player1_boat_color = 2;
     if (mouse_x > 800 && mouse_x < 820 && mouse_y > 190 && mouse_y < 210 && mouse_b & 1)
-      cols = 0;
+      player2_boat_color = 0;
     if (mouse_x > 800 && mouse_x < 820 && mouse_y > 220 && mouse_y < 240 && mouse_b & 1)
-      cols = 1;
+      player2_boat_color = 1;
     if (mouse_x > 800 && mouse_x < 820 && mouse_y > 250 && mouse_y < 270 && mouse_b & 1)
-      cols = 2;
+      player2_boat_color = 2;
     if (mouse_x > 800 && mouse_x < 820 && mouse_y > 330 && mouse_y < 350 && mouse_b & 1)
       res = 0;
     if (mouse_x > 800 && mouse_x < 820 && mouse_y > 360 && mouse_y < 380 && mouse_b & 1)
@@ -572,15 +574,15 @@ options_menu:
       alfont_textout_aa(mb, pump, "X", 840, 60, 0);
     else
       alfont_textout_aa(mb, pump, "X", 880, 60, 0);
-    if (colb == 0)
+    if (player1_boat_color == 0)
       alfont_textout_aa(mb, pump, "X", 800, 90, 0);
-    else if (colb == 1)
+    else if (player1_boat_color == 1)
       alfont_textout_aa(mb, pump, "X", 800, 120, 0);
     else
       alfont_textout_aa(mb, pump, "X", 800, 150, 0);
-    if (cols == 0)
+    if (player2_boat_color == 0)
       alfont_textout_aa(mb, pump, "X", 800, 190, 0);
-    else if (cols == 1)
+    else if (player2_boat_color == 1)
       alfont_textout_aa(mb, pump, "X", 800, 220, 0);
     else
       alfont_textout_aa(mb, pump, "X", 800, 250, 0);
@@ -665,7 +667,7 @@ game:
         player1.best_lap_sec = player1.last_lap_sec;
         player1.best_lap_min = player1.last_lap_min;
       }
-      player1.round++;
+      player1.laps++;
       play_sample(lap_gong, 255, 128, 1000, 0);
     }
 
@@ -779,7 +781,7 @@ game:
           player2.best_lap_sec = player2.last_lap_sec;
           player2.best_lap_min = player2.last_lap_min;
         }
-        player2.round++;
+        player2.laps++;
         play_sample(lap_gong, 255, 128, 1000, 0);
       }
 
@@ -967,7 +969,7 @@ game:
       {
         AI_pos = 0;
         // REFACTOR: DELETE LINE: curspl++;
-        player2.round++;
+        player2.laps++;
       }
     }
 
@@ -979,19 +981,19 @@ game:
     alfont_set_font_size(pump, 20);
     alfont_textprintf_centre_aa(mb, pump, 512, 70, 0xFFFFFF, "powered by DL games");
     alfont_set_font_size(pump, 35);
-    alfont_textprintf_aa(mb, pump, 20, 10, 0, "Laps %d", player1.round);
+    alfont_textprintf_aa(mb, pump, 20, 10, 0, "Laps %d", player1.laps);
     alfont_textprintf_aa(mb, pump, 20, 40, 0, "Last lap time %d:%d", player1.last_lap_min, player1.last_lap_sec);
     alfont_textprintf_aa(mb, pump, 20, 70, 0, "Best lap time %d:%d", player1.best_lap_min, player1.best_lap_sec);
     if (game_mode == MODE_MULTIPLAYER)
     {
-      alfont_textprintf_aa(mb, pump, 810, 10, 0, "Laps %d", player2.round);
+      alfont_textprintf_aa(mb, pump, 810, 10, 0, "Laps %d", player2.laps);
       alfont_textprintf_aa(mb, pump, 810, 40, 0, "Last lap time %d:%d", player2.last_lap_min, player2.last_lap_sec);
       alfont_textprintf_aa(mb, pump, 810, 70, 0, "Best lap time %d:%d", player2.best_lap_min, player2.best_lap_sec);
     }
-    // textprintf(mb,font,20,20,1024,"%d", super.round);
+
     if (game_mode != MODE_PRACTICE)
     {
-      if (player1.round == winning_laps)
+      if (player1.laps == winning_laps)
       {
         clear_to_color(mb, 0);
         alfont_set_font_size(pump, 75);
@@ -1003,7 +1005,7 @@ game:
         if (key[KEY_ESC])
           goto main_menu;
       }
-      if (player2.round == winning_laps)
+      if (player2.laps == winning_laps)
       {
         clear_to_color(mb, 0);
         alfont_set_font_size(pump, 75);
@@ -1018,7 +1020,7 @@ game:
     }
     else
     {
-      if (player1.round == winning_laps)
+      if (player1.laps == winning_laps)
       {
         clear_to_color(screen, 0);
         alfont_set_font_size(pump, 70);
