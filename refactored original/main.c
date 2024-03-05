@@ -7,6 +7,9 @@
 #define MODE_CAREER 1
 #define MODE_PRACTICE 2
 
+#define DEG_TO_RADS 0.01745329252
+#define RADS_TO_DEG 57.2957795147
+
 void rotate(BITMAP *bmp, BITMAP *tmp, float angle);
 
 int camup1 = 0, camup2 = 0, camleft2 = 0, camleft1 = 0;
@@ -51,14 +54,9 @@ BITMAP *mb, *menu;
 
 // BITMAP *boat, *ms, *boatr;
 int npts = 50;
-int xs[100 + 1];
-int ys[100 + 1];
 int xpos[100 * 26];
 int ypos[100 * 26];
-int curspl = 0, curpt = 0;
-float beta;
 int endofgame = 0;
-float xres, yres;
 int lastx = 288, lasty = 30;
 int pp = 0;
 int pots[26][8] = {{966, 1086, 997, 1011, 1026, 966, 1061, 928},
@@ -90,22 +88,19 @@ int pots[26][8] = {{966, 1086, 997, 1011, 1026, 966, 1061, 928},
 
 void calc_AI()
 {
-  curpt = 0;
-  curspl = 0;
-  while (curspl < 9)
+  int xs[100 + 1];
+  int ys[100 + 1];
+
+  for (int curspl = 0; curspl < 9; curspl++)
   {
     calc_spline(pots[curspl], npts + 1, xs, ys);
-    curpt = 0;
-    while (curpt < npts)
+
+    for (int curpt = 0; curpt < npts; curpt++)
     {
       xpos[(curspl * npts) + curpt] = xs[curpt];
       ypos[(curspl * npts) + curpt] = ys[curpt];
-      curpt++;
     }
-    curspl++;
   }
-  curpt = 0;
-  curspl = 0;
 }
 
 int getAI_x(int pos)
@@ -120,21 +115,24 @@ int getAI_y(int pos)
 
 float getAI_rot(int pos)
 {
-  curspl = curpt / npts;
-  if (curpt == 0)
-  {
-    xres = xpos[0] - xpos[(9 * npts) - 1];
-    yres = ypos[0] - ypos[(9 * npts) - 1];
-  }
-  else
-  {
-    xres = xpos[curpt] - xpos[curpt - 1];
-    yres = ypos[curpt] - ypos[curpt - 1];
-  }
+  float beta;
+  float xres, yres;
+
+  // REFACTOR: DELETE LINE: curspl = curpt / npts;
+  // if (curpt == 0) // NOTE: curpt is never assigned anything else than 0
+  // {
+  xres = xpos[0] - xpos[(9 * npts) - 1];
+  yres = ypos[0] - ypos[(9 * npts) - 1];
+  // }
+  // else
+  // {
+  //   xres = xpos[curpt] - xpos[curpt - 1];
+  //   yres = ypos[curpt] - ypos[curpt - 1];
+  // }
   if (xres != 0)
   {
     beta = atan(yres / xres);
-    beta = beta / (2 * 3.1415926535) * 360;
+    beta = beta * RADS_TO_DEG;
   }
 
   return beta;
@@ -142,34 +140,32 @@ float getAI_rot(int pos)
 
 float getAI_xres(int pos)
 {
-  curspl = curpt / npts;
-  if (curpt == 0)
-  {
-    xres = xpos[0] - xpos[(9 * npts) - 1];
-    // yres = ypos[0] - ypos[(9*npts)-1];
-  }
-  else
-  {
-    xres = xpos[curpt] - xpos[curpt - 1];
-    // yres = ypos[curpt] - ypos[curpt-1];
-  }
+  float xres;
+  // REFACTOR: DELETE LINE: curspl = curpt / npts;
+  // if (curpt == 0) // NOTE: curpt is never assigned anything else than 0
+  // {
+  xres = xpos[0] - xpos[(9 * npts) - 1];
+  // }
+  // else
+  // {
+  //   xres = xpos[curpt] - xpos[curpt - 1];
+  // }
 
   return xres;
 }
 
 float getAI_yres(int pos)
 {
-  curspl = curpt / npts;
-  if (curpt == 0)
-  {
-    // xres = xpos[0] - xpos[(9*npts)-1];
-    yres = ypos[0] - ypos[(9 * npts) - 1];
-  }
-  else
-  {
-    xres = xpos[curpt] - xpos[curpt - 1];
-    yres = ypos[curpt] - ypos[curpt - 1];
-  }
+  float yres;
+  // REFACTOR: DELETE LINE: curspl = curpt / npts;
+  // if (curpt == 0) // NOTE: curpt is never assigned anything else than 0
+  // {
+  yres = ypos[0] - ypos[(9 * npts) - 1];
+  // }
+  // else
+  // {
+  //   yres = ypos[curpt] - ypos[curpt - 1];
+  // }
 
   return yres;
 }
@@ -631,8 +627,8 @@ game:
 
     if (getr(getpixel(alpha, player1.x + gx, player1.y + gy)) == 0)
     {
-      /*boat.x -= cos(boat.rot/360 * 2 * 3.1415926535)*boat.xv;
-boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
+      /*boat.x -= cos(boat.rot* DEG_TO_RADS)*boat.xv;
+boat.y -= sin(boat.rot* DEG_TO_RADS)*boat.yv;*/
 
       player1.xv *= -0.75;
       player1.yv *= -0.75;
@@ -673,8 +669,8 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
 
     if (key[KEY_UP]) // && getr(getpixel(alpha,boat.x + gx, boat.y + gy)) == 255)
     {
-      player1.x += cos(player1.rot / 360 * 2 * 3.1415926535) * player1.xv;
-      player1.y += sin(player1.rot / 360 * 2 * 3.1415926535) * player1.yv;
+      player1.x += cos(player1.rot * DEG_TO_RADS) * player1.xv;
+      player1.y += sin(player1.rot * DEG_TO_RADS) * player1.yv;
       if (player1.xv < player1.maxspeed && player1.yv < player1.maxspeed)
       {
         player1.xv += player1.speedup;
@@ -693,8 +689,8 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
     }
     else
     {
-      player1.x += cos(player1.rot / 360 * 2 * 3.1415926535) * player1.xv;
-      player1.y += sin(player1.rot / 360 * 2 * 3.1415926535) * player1.yv;
+      player1.x += cos(player1.rot * DEG_TO_RADS) * player1.xv;
+      player1.y += sin(player1.rot * DEG_TO_RADS) * player1.yv;
 
       if (key[KEY_DOWN])
       {
@@ -782,8 +778,8 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
 
       if (key[KEY_W]) // && getr(getpixel(alpha,boat.x + gx, boat.y + gy)) == 255)
       {
-        player2.x += cos(player2.rot / 360 * 2 * 3.1415926535) * player2.xv;
-        player2.y += sin(player2.rot / 360 * 2 * 3.1415926535) * player2.yv;
+        player2.x += cos(player2.rot * DEG_TO_RADS) * player2.xv;
+        player2.y += sin(player2.rot * DEG_TO_RADS) * player2.yv;
         if (player2.xv < player2.maxspeed && player2.yv < player2.maxspeed)
         {
           player2.xv += player2.speedup;
@@ -802,8 +798,8 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
       }
       else
       {
-        player2.x += cos(player2.rot / 360 * 2 * 3.1415926535) * player2.xv;
-        player2.y += sin(player2.rot / 360 * 2 * 3.1415926535) * player2.yv;
+        player2.x += cos(player2.rot * DEG_TO_RADS) * player2.xv;
+        player2.y += sin(player2.rot * DEG_TO_RADS) * player2.yv;
 
         if (key[KEY_S])
         {
@@ -921,8 +917,8 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
     int boats_distance_less_than_90 = ((player1.x - player2.x) * (player1.x - player2.x)) + ((player1.y - player2.y) * (player1.y - player2.y)) <= 90 * 90;
     if (boats_distance_less_than_90)
     {
-      // boat.xv = -getAI_xres(AI_pos)/3;
-      // boat.yv = getAI_yres(AI_pos)/3;
+      // player1.xv = -getAI_xres(AI_pos)/3;
+      // player1.yv = getAI_yres(AI_pos)/3;
       play_sample(spring, 255, 128, 1000, 0);
       if (game_mode == MODE_MULTIPLAYER)
       {
@@ -941,15 +937,15 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
       }
       if (game_mode == MODE_CAREER)
       {
-        player1.xv = cos(getAI_rot(AI_pos) / 360 * 2 * 3.1415926535) * 5;
-        player1.yv = sin(getAI_rot(AI_pos) / 360 * 2 * 3.1415926535) * 5;
+        player1.xv = cos(getAI_rot(AI_pos) * DEG_TO_RADS) * 5;
+        player1.yv = sin(getAI_rot(AI_pos) * DEG_TO_RADS) * 5;
         player1.rot = getAI_rot(AI_pos);
 
-        player2.xv = cos(player1.rot / 360 * 2 * 3.14);
-        player2.yv = sin(player1.rot / 360 * 2 * 3.14);
+        player2.xv = cos(player1.rot * DEG_TO_RADS);
+        player2.yv = sin(player1.rot * DEG_TO_RADS);
       }
-      // xpos[AI_pos] += cos(boat.rot/360 * 2 * 3.1415926535)*5;
-      // ypos[AI_pos] += sin(boat.rot/360 * 2 * 3.1415926535)*5;
+      // xpos[AI_pos] += cos(boat.rot* DEG_TO_RADS)*5;
+      // ypos[AI_pos] += sin(boat.rot* DEG_TO_RADS)*5;
       // calc_AI();
     }
 
@@ -959,7 +955,7 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
       if (AI_pos == npts - 1)
       {
         AI_pos = 0;
-        curspl++;
+        // REFACTOR: DELETE LINE: curspl++;
         player2.round++;
       }
     }
