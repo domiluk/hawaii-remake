@@ -26,6 +26,17 @@ int global_min;
 int res = 0, depth = 16, vol = 255, nlaps = 3, player1_boat_color = 0, player2_boat_color = 1;
 int winning_laps = 3;
 
+enum Scene
+{
+  MAIN_MENU,
+  PLAY_MENU,
+  OPTIONS_MENU,
+  CREDITS_MENU,
+  EXIT
+};
+
+enum Scene main_menu_loop();
+
 typedef struct boat
 {
   float x;
@@ -260,57 +271,22 @@ int main()
   main_sample = load_sample("main.wav");
 
   alfont_set_font_size(pump, 50);
+  enum Scene next_scene = MAIN_MENU;
+
 main_menu:
-  play_sample(main_sample, 255, 128, 1000, 0);
-  while (1)
+  next_scene = main_menu_loop();
+  switch (next_scene)
   {
-    show_mouse(NULL);
-    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
-    alfont_set_font_size(pump, 50);
-    // ply ext
-    if (mouse_x > 162 && mouse_y > 588 && mouse_x < 258 && mouse_y < 657)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
-      if (mouse_b & 1)
-        goto play_menu;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 211, 608, 0, "Play");
-
-    if (mouse_x > 666 && mouse_y > 601 && mouse_x < 756 && mouse_y < 658)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 707, 608, 0xFFFFFF, "Exit");
-      if (mouse_b & 1)
-        goto exit;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 707, 608, 0, "Exit");
-
-    alfont_set_font_size(pump, 35);
-    // opt crd
-    if (mouse_x > 312 && mouse_y > 597 && mouse_x < 404 && mouse_y < 654)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
-      if (mouse_b & 1)
-        goto options_menu;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 357, 608, 0, "Options");
-
-    if (mouse_x > 546 && mouse_y > 597 && mouse_x < 635 && mouse_y < 656)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 586, 608, 0xFFFFFF, "Credits");
-      if (mouse_b & 1)
-        goto credits_menu;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 586, 608, 0, "Credits");
-
-    alfont_set_font_size(pump, 75);
-    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
-    show_mouse(mb);
-    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
+  case PLAY_MENU:
+    goto play_menu;
+  case EXIT:
+    goto exit;
+  case OPTIONS_MENU:
+    goto options_menu;
+  case CREDITS_MENU:
+    goto credits_menu;
   }
+
 play_menu:
   while (1)
   {
@@ -1036,3 +1012,57 @@ exit:
   printf("smrt blenderu");
 }
 END_OF_MAIN()
+
+enum Scene main_menu_loop()
+{
+  play_sample(main_sample, 255, 128, 1000, 0);
+  while (1)
+  {
+    show_mouse(NULL);
+    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
+    alfont_set_font_size(pump, 50);
+    // ply ext
+    if (mouse_x > 162 && mouse_y > 588 && mouse_x < 258 && mouse_y < 657)
+    {
+      alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
+      if (mouse_b & 1)
+        return PLAY_MENU;
+    }
+    else
+      alfont_textprintf_centre_aa(mb, pump, 211, 608, 0, "Play");
+
+    if (mouse_x > 666 && mouse_y > 601 && mouse_x < 756 && mouse_y < 658)
+    {
+      alfont_textprintf_centre_aa(mb, pump, 707, 608, 0xFFFFFF, "Exit");
+      if (mouse_b & 1)
+        return EXIT;
+    }
+    else
+      alfont_textprintf_centre_aa(mb, pump, 707, 608, 0, "Exit");
+
+    alfont_set_font_size(pump, 35);
+    // opt crd
+    if (mouse_x > 312 && mouse_y > 597 && mouse_x < 404 && mouse_y < 654)
+    {
+      alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
+      if (mouse_b & 1)
+        return OPTIONS_MENU;
+    }
+    else
+      alfont_textprintf_centre_aa(mb, pump, 357, 608, 0, "Options");
+
+    if (mouse_x > 546 && mouse_y > 597 && mouse_x < 635 && mouse_y < 656)
+    {
+      alfont_textprintf_centre_aa(mb, pump, 586, 608, 0xFFFFFF, "Credits");
+      if (mouse_b & 1)
+        return CREDITS_MENU;
+    }
+    else
+      alfont_textprintf_centre_aa(mb, pump, 586, 608, 0, "Credits");
+
+    alfont_set_font_size(pump, 75);
+    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
+    show_mouse(mb);
+    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
+  }
+}
