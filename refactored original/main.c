@@ -46,7 +46,7 @@ typedef struct boat
   BITMAP *bmp_rot;
 } BOAT;
 
-BOAT player1, super;
+BOAT player1, player2;
 BITMAP *mb, *menu;
 
 // BITMAP *boat, *ms, *boatr;
@@ -223,22 +223,22 @@ int main()
   player1.slowdown = 0.08;
   player1.rotate = 1.5;
 
-  super.x = 1105 - 100;
-  super.y = 1087 - 100;
-  super.round = 0;
-  super.cp_one = 0;
-  super.cp_two = 0;
-  super.xv = 0;
-  super.yv = 0;
-  super.rot = -75;
-  super.last_lap_sec = 0;
-  super.last_lap_min = 0;
-  super.best_lap_sec = 99;
-  super.best_lap_min = 99;
-  super.maxspeed = 10;
-  super.speedup = 0.05;
-  super.slowdown = 0.08;
-  super.rotate = 1.5;
+  player2.x = 1105 - 100;
+  player2.y = 1087 - 100;
+  player2.round = 0;
+  player2.cp_one = 0;
+  player2.cp_two = 0;
+  player2.xv = 0;
+  player2.yv = 0;
+  player2.rot = -75;
+  player2.last_lap_sec = 0;
+  player2.last_lap_min = 0;
+  player2.best_lap_sec = 99;
+  player2.best_lap_min = 99;
+  player2.maxspeed = 10;
+  player2.speedup = 0.05;
+  player2.slowdown = 0.08;
+  player2.rotate = 1.5;
 
   // boat.speed = 5.0;
 
@@ -250,8 +250,8 @@ int main()
 
   player1.bmp = load_bitmap("lodcervena.bmp", NULL);
   player1.bmp_rot = load_bitmap("lodcervena.bmp", NULL);
-  super.bmp = load_bitmap("lodzelena.bmp", NULL);
-  super.bmp_rot = load_bitmap("lodzelena.bmp", NULL);
+  player2.bmp = load_bitmap("lodzelena.bmp", NULL);
+  player2.bmp_rot = load_bitmap("lodzelena.bmp", NULL);
   ostrov = load_bitmap("ostrov1.bmp", NULL);
   alpha = load_bitmap("alpha1.bmp", NULL);
   menu = load_bitmap("menu.bmp", NULL);
@@ -730,7 +730,7 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
 
     if (game_mode == MODE_MP)
     {
-      rotate(wp, bc, super.rot);
+      rotate(wp, bc, player2.rot);
       // int rx, ry, gx, gy;
       for (rx = 0; rx < bc->w; rx++)
         for (ry = 0; ry < bc->h; ry++)
@@ -742,98 +742,98 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
           }
         }
 
-      if (getr(getpixel(alpha, super.x + gx, super.y + gy)) == 0)
+      if (getr(getpixel(alpha, player2.x + gx, player2.y + gy)) == 0)
       {
-        super.xv *= -0.75;
-        super.yv *= -0.75;
+        player2.xv *= -0.75;
+        player2.yv *= -0.75;
       }
 
-      if (getr(getpixel(alpha, super.x + gx, super.y + gy)) == 64)
+      if (getr(getpixel(alpha, player2.x + gx, player2.y + gy)) == 64)
       {
-        super.cp_one = 1;
+        player2.cp_one = 1;
       }
-      if (getr(getpixel(alpha, super.x + gx, super.y + gy)) == 128)
+      if (getr(getpixel(alpha, player2.x + gx, player2.y + gy)) == 128)
       {
-        super.cp_two = 1;
+        player2.cp_two = 1;
       }
-      if (getr(getpixel(alpha, super.x + gx, super.y + gy)) == 32)
+      if (getr(getpixel(alpha, player2.x + gx, player2.y + gy)) == 32)
       {
-        super.cp_three = 1;
+        player2.cp_three = 1;
       }
-      if (getr(getpixel(alpha, super.x + gx, super.y + gy)) == 192 && super.cp_one == 1 && super.cp_two == 1 && super.cp_three == 1)
+      if (getr(getpixel(alpha, player2.x + gx, player2.y + gy)) == 192 && player2.cp_one == 1 && player2.cp_two == 1 && player2.cp_three == 1)
       {
-        super.cp_one = 0;
-        super.cp_two = 0;
-        super.cp_three = 0;
-        super.last_lap_sec = global_sec - super.last_lap_sec;
-        super.last_lap_min = global_min - super.last_lap_min;
-        if (super.last_lap_sec < 0)
+        player2.cp_one = 0;
+        player2.cp_two = 0;
+        player2.cp_three = 0;
+        player2.last_lap_sec = global_sec - player2.last_lap_sec;
+        player2.last_lap_min = global_min - player2.last_lap_min;
+        if (player2.last_lap_sec < 0)
         {
-          super.last_lap_min--;
-          super.last_lap_sec = 60 - abs(super.last_lap_sec);
+          player2.last_lap_min--;
+          player2.last_lap_sec = 60 - abs(player2.last_lap_sec);
         }
-        if (super.last_lap_sec + (super.last_lap_min) * 60 < super.best_lap_sec + (super.best_lap_min) * 60)
+        if (player2.last_lap_sec + (player2.last_lap_min) * 60 < player2.best_lap_sec + (player2.best_lap_min) * 60)
         {
-          super.best_lap_sec = super.last_lap_sec;
-          super.best_lap_min = super.last_lap_min;
+          player2.best_lap_sec = player2.last_lap_sec;
+          player2.best_lap_min = player2.last_lap_min;
         }
-        super.round++;
+        player2.round++;
       }
 
       if (key[KEY_W]) // && getr(getpixel(alpha,boat.x + gx, boat.y + gy)) == 255)
       {
-        super.x += cos(super.rot / 360 * 2 * 3.1415926535) * super.xv;
-        super.y += sin(super.rot / 360 * 2 * 3.1415926535) * super.yv;
-        if (super.xv < super.maxspeed && super.yv < super.maxspeed)
+        player2.x += cos(player2.rot / 360 * 2 * 3.1415926535) * player2.xv;
+        player2.y += sin(player2.rot / 360 * 2 * 3.1415926535) * player2.yv;
+        if (player2.xv < player2.maxspeed && player2.yv < player2.maxspeed)
         {
-          super.xv += super.speedup;
-          super.yv += super.speedup;
+          player2.xv += player2.speedup;
+          player2.yv += player2.speedup;
         }
 
         if (key[KEY_A])
         {
-          super.rot -= super.rotate;
+          player2.rot -= player2.rotate;
         }
 
         if (key[KEY_D])
         {
-          super.rot += super.rotate;
+          player2.rot += player2.rotate;
         }
       }
       else
       {
-        super.x += cos(super.rot / 360 * 2 * 3.1415926535) * super.xv;
-        super.y += sin(super.rot / 360 * 2 * 3.1415926535) * super.yv;
+        player2.x += cos(player2.rot / 360 * 2 * 3.1415926535) * player2.xv;
+        player2.y += sin(player2.rot / 360 * 2 * 3.1415926535) * player2.yv;
 
         if (key[KEY_S])
         {
-          if (super.xv > super.slowdown)
-            super.xv -= super.slowdown;
-          if (super.yv > super.slowdown)
-            super.yv -= super.slowdown;
-          if (super.xv < -super.slowdown)
-            super.xv += super.slowdown;
-          if (super.yv < -super.slowdown)
-            super.yv += super.slowdown;
+          if (player2.xv > player2.slowdown)
+            player2.xv -= player2.slowdown;
+          if (player2.yv > player2.slowdown)
+            player2.yv -= player2.slowdown;
+          if (player2.xv < -player2.slowdown)
+            player2.xv += player2.slowdown;
+          if (player2.yv < -player2.slowdown)
+            player2.yv += player2.slowdown;
         }
 
-        if (super.xv > super.slowdown)
-          super.xv -= super.slowdown;
-        if (super.yv > super.slowdown)
-          super.yv -= super.slowdown;
-        if (super.xv < -super.slowdown)
-          super.xv += super.slowdown;
-        if (super.yv < -super.slowdown)
-          super.yv += super.slowdown;
+        if (player2.xv > player2.slowdown)
+          player2.xv -= player2.slowdown;
+        if (player2.yv > player2.slowdown)
+          player2.yv -= player2.slowdown;
+        if (player2.xv < -player2.slowdown)
+          player2.xv += player2.slowdown;
+        if (player2.yv < -player2.slowdown)
+          player2.yv += player2.slowdown;
 
         if (key[KEY_A])
         {
-          super.rot -= super.rotate;
+          player2.rot -= player2.rotate;
         }
 
         if (key[KEY_D])
         {
-          super.rot += super.rotate;
+          player2.rot += player2.rotate;
         }
       }
     } // if mode = MODE_MP
@@ -863,8 +863,8 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
       draw_sprite(vsetko, player1.bmp_rot, player1.x, player1.y);
       // vykreslenie pravej polky
 
-      camleft2 = super.x - 256;
-      camup2 = super.y - 384;
+      camleft2 = player2.x - 256;
+      camup2 = player2.y - 384;
 
       if (camleft2 < 0)
         camleft2 = 0;
@@ -875,8 +875,8 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
       if (camleft2 > (ostrov->w - 1024 + 512))
         camleft2 = ostrov->w - 1024 + 512;
 
-      rotate(super.bmp, super.bmp_rot, super.rot + 90);
-      draw_sprite(vsetko, super.bmp_rot, super.x, super.y);
+      rotate(player2.bmp, player2.bmp_rot, player2.rot + 90);
+      draw_sprite(vsetko, player2.bmp_rot, player2.x, player2.y);
       blit(vsetko, mb, camleft1, camup1, 0, 0, 512, 768);
       blit(vsetko, mb, camleft2, camup2, 512, 0, 512, 768);
       vline(mb, 512, 0, 768, makecol(rand() % 255, 0, 0));
@@ -900,28 +900,28 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
 
     if (game_mode == MODE_CARRIER)
     {
-      super.x = getAI_x(AI_pos);
-      super.y = getAI_y(AI_pos);
-      super.rot = getAI_rot(AI_pos);
-      if (super.xv > 0.2 || super.yv > 0.2)
+      player2.x = getAI_x(AI_pos);
+      player2.y = getAI_y(AI_pos);
+      player2.rot = getAI_rot(AI_pos);
+      if (player2.xv > 0.2 || player2.yv > 0.2)
       {
-        super.x += super.xv;
-        super.y += super.yv;
-        if (super.xv > super.slowdown)
-          super.xv -= super.slowdown;
-        if (super.yv > super.slowdown)
-          super.yv -= super.slowdown;
-        if (super.xv < -super.slowdown)
-          super.xv += super.slowdown;
-        if (super.yv < -super.slowdown)
-          super.yv += super.slowdown;
+        player2.x += player2.xv;
+        player2.y += player2.yv;
+        if (player2.xv > player2.slowdown)
+          player2.xv -= player2.slowdown;
+        if (player2.yv > player2.slowdown)
+          player2.yv -= player2.slowdown;
+        if (player2.xv < -player2.slowdown)
+          player2.xv += player2.slowdown;
+        if (player2.yv < -player2.slowdown)
+          player2.yv += player2.slowdown;
       }
-      rotate(super.bmp, super.bmp_rot, super.rot);
-      draw_sprite(mb, super.bmp_rot, super.x - camleft1, super.y - camup1);
+      rotate(player2.bmp, player2.bmp_rot, player2.rot);
+      draw_sprite(mb, player2.bmp_rot, player2.x - camleft1, player2.y - camup1);
     }
     // rest(40);
 
-    if (abs((player1.x - super.x) * (player1.x - super.x)) + abs((player1.y - super.y) * (player1.y - super.y)) <= 90 * 90)
+    if (abs((player1.x - player2.x) * (player1.x - player2.x)) + abs((player1.y - player2.y) * (player1.y - player2.y)) <= 90 * 90)
     {
       // boat.xv = -getAI_xres(AI_pos)/3;
       // boat.yv = getAI_yres(AI_pos)/3;
@@ -930,16 +930,16 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
       {
         float root;
         root = player1.rot;
-        player1.rot = super.rot;
-        super.rot = root;
+        player1.rot = player2.rot;
+        player2.rot = root;
 
         root = player1.xv;
-        player1.xv = super.xv;
-        super.xv = root;
+        player1.xv = player2.xv;
+        player2.xv = root;
 
         root = player1.yv;
-        player1.yv = super.yv;
-        super.yv = root;
+        player1.yv = player2.yv;
+        player2.yv = root;
       }
       if (game_mode == MODE_CARRIER)
       {
@@ -947,8 +947,8 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
         player1.yv = sin(getAI_rot(AI_pos) / 360 * 2 * 3.1415926535) * 5;
         player1.rot = getAI_rot(AI_pos);
 
-        super.xv = cos(player1.rot / 360 * 2 * 3.14);
-        super.yv = sin(player1.rot / 360 * 2 * 3.14);
+        player2.xv = cos(player1.rot / 360 * 2 * 3.14);
+        player2.yv = sin(player1.rot / 360 * 2 * 3.14);
       }
       // xpos[AI_pos] += cos(boat.rot/360 * 2 * 3.1415926535)*5;
       // ypos[AI_pos] += sin(boat.rot/360 * 2 * 3.1415926535)*5;
@@ -962,7 +962,7 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
       {
         AI_pos = 0;
         curspl++;
-        super.round++;
+        player2.round++;
       }
     }
 
@@ -979,9 +979,9 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
     alfont_textprintf_aa(mb, pump, 20, 70, 0, "Best lap time %d:%d", player1.best_lap_min, player1.best_lap_sec);
     if (game_mode == MODE_MP)
     {
-      alfont_textprintf_aa(mb, pump, 810, 10, 0, "Laps %d", super.round);
-      alfont_textprintf_aa(mb, pump, 810, 40, 0, "Last lap time %d:%d", super.last_lap_min, super.last_lap_sec);
-      alfont_textprintf_aa(mb, pump, 810, 70, 0, "Best lap time %d:%d", super.best_lap_min, super.best_lap_sec);
+      alfont_textprintf_aa(mb, pump, 810, 10, 0, "Laps %d", player2.round);
+      alfont_textprintf_aa(mb, pump, 810, 40, 0, "Last lap time %d:%d", player2.last_lap_min, player2.last_lap_sec);
+      alfont_textprintf_aa(mb, pump, 810, 70, 0, "Best lap time %d:%d", player2.best_lap_min, player2.best_lap_sec);
     }
     // textprintf(mb,font,20,20,1024,"%d", super.round);
     if (game_mode != MODE_PRACTICE)
@@ -998,7 +998,7 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
         if (key[KEY_ESC])
           goto main_menu;
       }
-      if (super.round == winning_laps)
+      if (player2.round == winning_laps)
       {
         clear_to_color(mb, 0);
         alfont_set_font_size(pump, 75);
