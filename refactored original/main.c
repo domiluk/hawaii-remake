@@ -473,6 +473,7 @@ credits_menu:
   goto scene_switch;
 
 game:
+  install_int(mooove_time, 1000);
   while (!key[KEY_ESC])
   {
 
@@ -898,107 +899,61 @@ exit:
 }
 END_OF_MAIN()
 
-int play_button()
+int main_menu_button(const char *label, int x_min, int y_min, int x_max, int y_max, int label_x, int label_y)
 {
-  if (mouse_x > 162 && mouse_y > 588 && mouse_x < 258 && mouse_y < 657)
+  if (mouse_x > x_min && mouse_y > y_min && mouse_x < x_max && mouse_y < y_max)
   {
-    alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
+    alfont_textprintf_centre_aa(mb, pump, label_x, label_y, 0xFFFFFF, label);
     if (mouse_b & 1)
       return 1;
   }
   else
-    alfont_textprintf_centre_aa(mb, pump, 211, 608, 0, "Play");
+    alfont_textprintf_centre_aa(mb, pump, label_x, label_y, 0, label);
   return 0;
+}
+
+int play_button()
+{
+  return main_menu_button("Play", 162, 588, 258, 657, 211, 608);
 }
 
 int exit_button()
 {
-  if (mouse_x > 666 && mouse_y > 601 && mouse_x < 756 && mouse_y < 658)
-  {
-    alfont_textprintf_centre_aa(mb, pump, 707, 608, 0xFFFFFF, "Exit");
-    if (mouse_b & 1)
-      return 1;
-  }
-  else
-    alfont_textprintf_centre_aa(mb, pump, 707, 608, 0, "Exit");
-  return 0;
+  return main_menu_button("Exit", 666, 601, 756, 658, 707, 608);
 }
 
 int options_button()
 {
-  if (mouse_x > 312 && mouse_y > 597 && mouse_x < 404 && mouse_y < 654)
-  {
-    alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
-    if (mouse_b & 1)
-      return 1;
-  }
-  else
-    alfont_textprintf_centre_aa(mb, pump, 357, 608, 0, "Options");
-  return 0;
+  return main_menu_button("Options", 312, 597, 404, 654, 357, 608);
 }
 
 int credits_button()
 {
-  if (mouse_x > 546 && mouse_y > 597 && mouse_x < 635 && mouse_y < 656)
-  {
-    alfont_textprintf_centre_aa(mb, pump, 586, 608, 0xFFFFFF, "Credits");
-    if (mouse_b & 1)
-      return 1;
-  }
-  else
-    alfont_textprintf_centre_aa(mb, pump, 586, 608, 0, "Credits");
-  return 0;
+  return main_menu_button("Credits", 546, 597, 635, 656, 586, 608);
 }
 
 int career_button()
 {
-  if (mouse_x > 100 && mouse_y > 340 && mouse_x < 306 && mouse_y < 390)
-  {
-    alfont_textprintf_centre_aa(mb, pump, 206, 357, 0xFFFFFF, "Career");
-    if (mouse_b & 1)
-    {
-      game_mode = MODE_CAREER;
-      install_int(mooove_time, 1000);
-      return 1;
-    }
-  }
-  else
-    alfont_textprintf_centre_aa(mb, pump, 206, 357, 0, "Career");
-  return 0;
+  int pressed = main_menu_button("Career", 100, 340, 306, 390, 206, 357);
+  if (pressed)
+    game_mode = MODE_CAREER;
+  return pressed;
 }
 
 int practice_button()
 {
-  if (mouse_x > 100 && mouse_y > 390 && mouse_x < 306 && mouse_y < 440)
-  {
-    alfont_textprintf_centre_aa(mb, pump, 206, 397, 0xFFFFFF, "Practice");
-    if (mouse_b & 1)
-    {
-      game_mode = MODE_PRACTICE;
-      install_int(mooove_time, 1000);
-      return 1;
-    }
-  }
-  else
-    alfont_textprintf_centre_aa(mb, pump, 206, 397, 0, "Practice");
-  return 0;
+  int pressed = main_menu_button("Practice", 100, 390, 306, 440, 206, 397);
+  if (pressed)
+    game_mode = MODE_PRACTICE;
+  return pressed;
 }
 
 int multiplayer_button()
 {
-  if (mouse_x > 100 && mouse_y > 440 && mouse_x < 306 && mouse_y < 490)
-  {
-    alfont_textprintf_centre_aa(mb, pump, 206, 437, 0xFFFFFF, "Multiplayer");
-    if (mouse_b & 1)
-    {
-      game_mode = MODE_MULTIPLAYER;
-      install_int(mooove_time, 1000);
-      return 1;
-    }
-  }
-  else
-    alfont_textprintf_centre_aa(mb, pump, 206, 437, 0, "Multiplayer");
-  return 0;
+  int pressed = main_menu_button("Multiplayer", 100, 440, 306, 490, 206, 437);
+  if (pressed)
+    game_mode = MODE_MULTIPLAYER;
+  return pressed;
 }
 
 enum Scene main_menu_loop()
