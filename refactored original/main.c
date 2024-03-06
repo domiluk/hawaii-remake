@@ -870,6 +870,7 @@ game:
     {
       // player1.xv = -getAI_xres(AI_pos)/3;
       // player1.yv = getAI_yres(AI_pos)/3;
+      stop_sample(spring);
       play_sample(spring, 255, 128, 1000, 0);
       if (game_mode == MODE_MULTIPLAYER)
       {
