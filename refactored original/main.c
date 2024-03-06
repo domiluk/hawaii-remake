@@ -32,10 +32,12 @@ enum Scene
   PLAY_MENU,
   OPTIONS_MENU,
   CREDITS_MENU,
+  GAME,
   EXIT
 };
 
 enum Scene main_menu_loop();
+enum Scene play_menu_loop();
 enum Scene credits_menu_loop();
 
 typedef struct boat
@@ -286,6 +288,8 @@ scene_switch:
     goto options_menu;
   case CREDITS_MENU:
     goto credits_menu;
+  case GAME:
+    goto game;
   case EXIT:
     goto exit;
   }
@@ -295,96 +299,10 @@ main_menu:
   goto scene_switch;
 
 play_menu:
-  while (1)
-  {
-    show_mouse(NULL);
-    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
-    alfont_set_font_size(pump, 50);
-
-    alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
-
-    if (mouse_x > 666 && mouse_y > 601 && mouse_x < 756 && mouse_y < 658)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 707, 608, 0xFFFFFF, "Exit");
-      if (mouse_b & 1)
-        goto exit;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 707, 608, 0, "Exit");
-
-    alfont_set_font_size(pump, 35);
-
-    if (mouse_x > 312 && mouse_y > 597 && mouse_x < 404 && mouse_y < 654)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
-      if (mouse_b & 1)
-        goto options_menu;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 357, 608, 0, "Options");
-
-    if (mouse_x > 546 && mouse_y > 597 && mouse_x < 635 && mouse_y < 656)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 586, 608, 0xFFFFFF, "Credits");
-      if (mouse_b & 1)
-        goto credits_menu;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 586, 608, 0, "Credits");
-
-    alfont_set_font_size(pump, 60);
-
-    if (mouse_x > 100 && mouse_y > 340 && mouse_x < 306 && mouse_y < 390)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 206, 357, 0xFFFFFF, "Career");
-      if (mouse_b & 1)
-      {
-        game_mode = MODE_CAREER;
-        install_int(mooove_time, 1000);
-        goto game;
-      }
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 206, 357, 0, "Career");
-
-    if (mouse_x > 100 && mouse_y > 390 && mouse_x < 306 && mouse_y < 440)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 206, 397, 0xFFFFFF, "Practice");
-      if (mouse_b & 1)
-      {
-        game_mode = MODE_PRACTICE;
-        install_int(mooove_time, 1000);
-        goto game;
-      }
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 206, 397, 0, "Practice");
-
-    if (mouse_x > 100 && mouse_y > 440 && mouse_x < 306 && mouse_y < 490)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 206, 437, 0xFFFFFF, "Multiplayer");
-      if (mouse_b & 1)
-      {
-        game_mode = MODE_MULTIPLAYER;
-        install_int(mooove_time, 1000);
-        goto game;
-      }
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 206, 437, 0, "Multiplayer");
-
-    alfont_set_font_size(pump, 75);
-    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
-    show_mouse(mb);
-    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
-  }
-
-credits_menu: //////////////////////////////////////////////credits
-  next_scene = credits_menu_loop();
+  next_scene = play_menu_loop();
   goto scene_switch;
 
 options_menu:
-  ////////////////////////////////////////////////////////////////options
   while (1)
   {
     show_mouse(NULL);
@@ -549,6 +467,10 @@ options_menu:
     show_mouse(mb);
     blit(mb, screen, 0, 0, 0, 0, 1024, 768);
   }
+
+credits_menu:
+  next_scene = credits_menu_loop();
+  goto scene_switch;
 
 game:
   while (!key[KEY_ESC])
@@ -1015,6 +937,70 @@ int options_button()
   return 0;
 }
 
+int credits_button()
+{
+  if (mouse_x > 546 && mouse_y > 597 && mouse_x < 635 && mouse_y < 656)
+  {
+    alfont_textprintf_centre_aa(mb, pump, 586, 608, 0xFFFFFF, "Credits");
+    if (mouse_b & 1)
+      return 1;
+  }
+  else
+    alfont_textprintf_centre_aa(mb, pump, 586, 608, 0, "Credits");
+  return 0;
+}
+
+int career_button()
+{
+  if (mouse_x > 100 && mouse_y > 340 && mouse_x < 306 && mouse_y < 390)
+  {
+    alfont_textprintf_centre_aa(mb, pump, 206, 357, 0xFFFFFF, "Career");
+    if (mouse_b & 1)
+    {
+      game_mode = MODE_CAREER;
+      install_int(mooove_time, 1000);
+      return 1;
+    }
+  }
+  else
+    alfont_textprintf_centre_aa(mb, pump, 206, 357, 0, "Career");
+  return 0;
+}
+
+int practice_button()
+{
+  if (mouse_x > 100 && mouse_y > 390 && mouse_x < 306 && mouse_y < 440)
+  {
+    alfont_textprintf_centre_aa(mb, pump, 206, 397, 0xFFFFFF, "Practice");
+    if (mouse_b & 1)
+    {
+      game_mode = MODE_PRACTICE;
+      install_int(mooove_time, 1000);
+      return 1;
+    }
+  }
+  else
+    alfont_textprintf_centre_aa(mb, pump, 206, 397, 0, "Practice");
+  return 0;
+}
+
+int multiplayer_button()
+{
+  if (mouse_x > 100 && mouse_y > 440 && mouse_x < 306 && mouse_y < 490)
+  {
+    alfont_textprintf_centre_aa(mb, pump, 206, 437, 0xFFFFFF, "Multiplayer");
+    if (mouse_b & 1)
+    {
+      game_mode = MODE_MULTIPLAYER;
+      install_int(mooove_time, 1000);
+      return 1;
+    }
+  }
+  else
+    alfont_textprintf_centre_aa(mb, pump, 206, 437, 0, "Multiplayer");
+  return 0;
+}
+
 enum Scene main_menu_loop()
 {
   play_sample(main_sample, 255, 128, 1000, 1);
@@ -1035,14 +1021,47 @@ enum Scene main_menu_loop()
     if (options_button())
       return OPTIONS_MENU;
 
-    if (mouse_x > 546 && mouse_y > 597 && mouse_x < 635 && mouse_y < 656)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 586, 608, 0xFFFFFF, "Credits");
-      if (mouse_b & 1)
-        return CREDITS_MENU;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 586, 608, 0, "Credits");
+    if (credits_button())
+      return CREDITS_MENU;
+
+    alfont_set_font_size(pump, 75);
+    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
+    show_mouse(mb);
+    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
+  }
+}
+
+enum Scene play_menu_loop()
+{
+  while (1)
+  {
+    show_mouse(NULL);
+    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
+    alfont_set_font_size(pump, 50);
+
+    alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
+
+    if (exit_button())
+      return EXIT;
+
+    alfont_set_font_size(pump, 35);
+
+    if (options_button())
+      return OPTIONS_MENU;
+
+    if (credits_button())
+      return CREDITS_MENU;
+
+    alfont_set_font_size(pump, 60);
+
+    if (career_button())
+      return GAME;
+
+    if (practice_button())
+      return GAME;
+
+    if (multiplayer_button())
+      return GAME;
 
     alfont_set_font_size(pump, 75);
     alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
