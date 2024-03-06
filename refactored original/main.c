@@ -36,6 +36,7 @@ enum Scene
 };
 
 enum Scene main_menu_loop();
+enum Scene credits_menu_loop();
 
 typedef struct boat
 {
@@ -271,21 +272,27 @@ int main()
   main_sample = load_sample("main.wav");
 
   alfont_set_font_size(pump, 50);
+
   enum Scene next_scene = MAIN_MENU;
 
-main_menu:
-  next_scene = main_menu_loop();
+scene_switch:
   switch (next_scene)
   {
+  case MAIN_MENU:
+    goto main_menu;
   case PLAY_MENU:
     goto play_menu;
-  case EXIT:
-    goto exit;
   case OPTIONS_MENU:
     goto options_menu;
   case CREDITS_MENU:
     goto credits_menu;
+  case EXIT:
+    goto exit;
   }
+
+main_menu:
+  next_scene = main_menu_loop();
+  goto scene_switch;
 
 play_menu:
   while (1)
@@ -293,7 +300,7 @@ play_menu:
     show_mouse(NULL);
     blit(menu, mb, 0, 0, 0, 0, 1024, 768);
     alfont_set_font_size(pump, 50);
-    // ply ext
+
     alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
 
     if (mouse_x > 666 && mouse_y > 601 && mouse_x < 756 && mouse_y < 658)
@@ -306,7 +313,7 @@ play_menu:
       alfont_textprintf_centre_aa(mb, pump, 707, 608, 0, "Exit");
 
     alfont_set_font_size(pump, 35);
-    // opt crd
+
     if (mouse_x > 312 && mouse_y > 597 && mouse_x < 404 && mouse_y < 654)
     {
       alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
@@ -373,53 +380,8 @@ play_menu:
   }
 
 credits_menu: //////////////////////////////////////////////credits
-  while (1)
-  {
-    show_mouse(NULL);
-    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
-    alfont_set_font_size(pump, 50);
-
-    if (mouse_x > 162 && mouse_y > 588 && mouse_x < 258 && mouse_y < 657)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
-      if (mouse_b & 1)
-        goto play_menu;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 211, 608, 0, "Play");
-
-    if (mouse_x > 666 && mouse_y > 601 && mouse_x < 756 && mouse_y < 658)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 707, 608, 0xFFFFFF, "Exit");
-      if (mouse_b & 1)
-        goto exit;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 707, 608, 0, "Exit");
-
-    alfont_set_font_size(pump, 35);
-
-    if (mouse_x > 312 && mouse_y > 597 && mouse_x < 404 && mouse_y < 654)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
-      if (mouse_b & 1)
-        goto options_menu;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 357, 608, 0, "Options");
-
-    alfont_textprintf_centre_aa(mb, pump, 586, 608, 0xFFFFFF, "Credits");
-
-    alfont_textprintf_centre_aa(mb, pump, 206, 417, 0, "Programming");
-    alfont_textprintf_centre_aa(mb, pump, 764, 417, 0, "Graphics");
-    alfont_set_font_size(pump, 70);
-    alfont_textprintf_centre_aa(mb, pump, 206, 437, 0, "Daniel Lovasko");
-    alfont_textprintf_centre_aa(mb, pump, 764, 437, 0, "Dominik Lukac");
-    alfont_set_font_size(pump, 75);
-    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
-    show_mouse(mb);
-    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
-  }
+  next_scene = credits_menu_loop();
+  goto scene_switch;
 
 options_menu:
   ////////////////////////////////////////////////////////////////options
@@ -1013,6 +975,45 @@ exit:
 }
 END_OF_MAIN()
 
+int play_button()
+{
+  if (mouse_x > 162 && mouse_y > 588 && mouse_x < 258 && mouse_y < 657)
+  {
+    alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
+    if (mouse_b & 1)
+      return 1;
+  }
+  else
+    alfont_textprintf_centre_aa(mb, pump, 211, 608, 0, "Play");
+  return 0;
+}
+
+int exit_button()
+{
+  if (mouse_x > 666 && mouse_y > 601 && mouse_x < 756 && mouse_y < 658)
+  {
+    alfont_textprintf_centre_aa(mb, pump, 707, 608, 0xFFFFFF, "Exit");
+    if (mouse_b & 1)
+      return 1;
+  }
+  else
+    alfont_textprintf_centre_aa(mb, pump, 707, 608, 0, "Exit");
+  return 0;
+}
+
+int options_button()
+{
+  if (mouse_x > 312 && mouse_y > 597 && mouse_x < 404 && mouse_y < 654)
+  {
+    alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
+    if (mouse_b & 1)
+      return 1;
+  }
+  else
+    alfont_textprintf_centre_aa(mb, pump, 357, 608, 0, "Options");
+  return 0;
+}
+
 enum Scene main_menu_loop()
 {
   play_sample(main_sample, 255, 128, 1000, 0);
@@ -1021,35 +1022,17 @@ enum Scene main_menu_loop()
     show_mouse(NULL);
     blit(menu, mb, 0, 0, 0, 0, 1024, 768);
     alfont_set_font_size(pump, 50);
-    // ply ext
-    if (mouse_x > 162 && mouse_y > 588 && mouse_x < 258 && mouse_y < 657)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
-      if (mouse_b & 1)
-        return PLAY_MENU;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 211, 608, 0, "Play");
 
-    if (mouse_x > 666 && mouse_y > 601 && mouse_x < 756 && mouse_y < 658)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 707, 608, 0xFFFFFF, "Exit");
-      if (mouse_b & 1)
-        return EXIT;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 707, 608, 0, "Exit");
+    if (play_button())
+      return PLAY_MENU;
+
+    if (exit_button())
+      return EXIT;
 
     alfont_set_font_size(pump, 35);
-    // opt crd
-    if (mouse_x > 312 && mouse_y > 597 && mouse_x < 404 && mouse_y < 654)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
-      if (mouse_b & 1)
-        return OPTIONS_MENU;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 357, 608, 0, "Options");
+
+    if (options_button())
+      return OPTIONS_MENU;
 
     if (mouse_x > 546 && mouse_y > 597 && mouse_x < 635 && mouse_y < 656)
     {
@@ -1060,6 +1043,39 @@ enum Scene main_menu_loop()
     else
       alfont_textprintf_centre_aa(mb, pump, 586, 608, 0, "Credits");
 
+    alfont_set_font_size(pump, 75);
+    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
+    show_mouse(mb);
+    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
+  }
+}
+
+enum Scene credits_menu_loop()
+{
+  while (1)
+  {
+    show_mouse(NULL);
+    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
+    alfont_set_font_size(pump, 50);
+
+    if (play_button())
+      return PLAY_MENU;
+
+    if (exit_button())
+      return EXIT;
+
+    alfont_set_font_size(pump, 35);
+
+    if (options_button())
+      return OPTIONS_MENU;
+
+    alfont_textprintf_centre_aa(mb, pump, 586, 608, 0xFFFFFF, "Credits");
+
+    alfont_textprintf_centre_aa(mb, pump, 206, 417, 0, "Programming");
+    alfont_textprintf_centre_aa(mb, pump, 764, 417, 0, "Graphics");
+    alfont_set_font_size(pump, 70);
+    alfont_textprintf_centre_aa(mb, pump, 206, 437, 0, "Daniel Lovasko");
+    alfont_textprintf_centre_aa(mb, pump, 764, 437, 0, "Dominik Lukac");
     alfont_set_font_size(pump, 75);
     alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
     show_mouse(mb);
