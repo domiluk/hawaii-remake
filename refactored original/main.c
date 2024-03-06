@@ -1016,7 +1016,7 @@ int options_button()
 
 enum Scene main_menu_loop()
 {
-  play_sample(main_sample, 255, 128, 1000, 0);
+  play_sample(main_sample, 255, 128, 1000, 1);
   while (1)
   {
     show_mouse(NULL);
