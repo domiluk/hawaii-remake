@@ -22,7 +22,7 @@ int game_mode;
 int global_sec;
 int global_min;
 
-// these are set in options, never used anyway and never stored to a file or read from a file
+// TODO: these are set in options, never used anyway and never stored to a file or read from a file
 int res = 0, depth = 16, vol = 255, nlaps = 3, player1_boat_color = 0, player2_boat_color = 1;
 int winning_laps = 3;
 
@@ -40,6 +40,7 @@ enum Scene main_menu_loop();
 enum Scene play_menu_loop();
 enum Scene options_menu_loop();
 enum Scene credits_menu_loop();
+enum Scene game_loop();
 
 typedef struct boat
 {
@@ -276,46 +277,360 @@ int main()
 
   alfont_set_font_size(pump, 50);
 
+  play_sample(main_sample, 255, 128, 1000, 1);
+
   enum Scene next_scene = MAIN_MENU;
-
-scene_switch:
-  switch (next_scene)
+  while (1)
   {
-  case MAIN_MENU:
-    goto main_menu;
-  case PLAY_MENU:
-    goto play_menu;
-  case OPTIONS_MENU:
-    goto options_menu;
-  case CREDITS_MENU:
-    goto credits_menu;
-  case GAME:
-    goto game;
-  case EXIT:
-    goto exit;
+    switch (next_scene)
+    {
+    case MAIN_MENU:
+      next_scene = main_menu_loop();
+      break;
+    case PLAY_MENU:
+      next_scene = play_menu_loop();
+      break;
+    case OPTIONS_MENU:
+      next_scene = options_menu_loop();
+      break;
+    case CREDITS_MENU:
+      next_scene = credits_menu_loop();
+      break;
+    case GAME:
+      next_scene = game_loop();
+      break;
+    case EXIT:
+      printf("smrt blenderu");
+      exit(0);
+    }
   }
+}
+END_OF_MAIN()
 
-main_menu:
-  next_scene = main_menu_loop();
-  goto scene_switch;
+int main_menu_button(const char *label, int x_min, int y_min, int x_max, int y_max, int label_x, int label_y)
+{
+  rect(mb, x_min, y_min, x_max, y_max, makecol(0, 0, 0));
+  if (mouse_x > x_min && mouse_y > y_min && mouse_x < x_max && mouse_y < y_max)
+  {
+    alfont_textprintf_centre_aa(mb, pump, label_x, label_y, 0xFFFFFF, label);
+    if (mouse_b & 1)
+      return 1;
+  }
+  else
+    alfont_textprintf_centre_aa(mb, pump, label_x, label_y, 0, label);
+  return 0;
+}
 
-play_menu:
-  next_scene = play_menu_loop();
-  goto scene_switch;
+int play_button()
+{
+  return main_menu_button("Play", 162, 588, 258, 657, 211, 608);
+}
 
-options_menu:
-  next_scene = options_menu_loop();
-  goto scene_switch;
+int exit_button()
+{
+  return main_menu_button("Exit", 666, 601, 756, 658, 707, 608);
+}
 
-credits_menu:
-  next_scene = credits_menu_loop();
-  goto scene_switch;
+int options_button()
+{
+  return main_menu_button("Options", 312, 597, 404, 654, 357, 608);
+}
 
-game:
+int credits_button()
+{
+  return main_menu_button("Credits", 546, 597, 635, 656, 586, 608);
+}
+
+int career_button()
+{
+  int pressed = main_menu_button("Career", 100, 340, 306, 390, 206, 357);
+  if (pressed)
+    game_mode = MODE_CAREER;
+  return pressed;
+}
+
+int practice_button()
+{
+  int pressed = main_menu_button("Practice", 100, 390, 306, 440, 206, 397);
+  if (pressed)
+    game_mode = MODE_PRACTICE;
+  return pressed;
+}
+
+int multiplayer_button()
+{
+  int pressed = main_menu_button("Multiplayer", 100, 440, 306, 490, 206, 437);
+  if (pressed)
+    game_mode = MODE_MULTIPLAYER;
+  return pressed;
+}
+
+int checkbox(int x, int y, int checked)
+{
+  rect(mb, x, y, x + 20, y + 20, 0);
+  if (checked)
+    alfont_textout_aa(mb, pump, "X", x, y, 0);
+  return mouse_x > x && mouse_x < x + 20 && mouse_y > y && mouse_y < y + 20 && mouse_b & 1;
+}
+
+enum Scene main_menu_loop()
+{
+  while (1)
+  {
+    show_mouse(NULL);
+    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
+    alfont_set_font_size(pump, 50);
+
+    if (play_button())
+      return PLAY_MENU;
+
+    if (exit_button())
+      return EXIT;
+
+    alfont_set_font_size(pump, 35);
+
+    if (options_button())
+      return OPTIONS_MENU;
+
+    if (credits_button())
+      return CREDITS_MENU;
+
+    alfont_set_font_size(pump, 75);
+    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
+    show_mouse(mb);
+    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
+  }
+}
+
+enum Scene play_menu_loop()
+{
+  while (1)
+  {
+    show_mouse(NULL);
+    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
+    alfont_set_font_size(pump, 50);
+
+    alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
+
+    if (exit_button())
+      return EXIT;
+
+    alfont_set_font_size(pump, 35);
+
+    if (options_button())
+      return OPTIONS_MENU;
+
+    if (credits_button())
+      return CREDITS_MENU;
+
+    alfont_set_font_size(pump, 60);
+
+    if (career_button())
+      return GAME;
+
+    if (practice_button())
+      return GAME;
+
+    if (multiplayer_button())
+      return GAME;
+
+    alfont_set_font_size(pump, 75);
+    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
+    show_mouse(mb);
+    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
+  }
+}
+
+enum Scene options_menu_loop()
+{
+  while (1)
+  {
+    show_mouse(NULL);
+    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
+    alfont_set_font_size(pump, 50);
+
+    if (play_button())
+      return PLAY_MENU;
+
+    if (exit_button())
+      return EXIT;
+
+    alfont_set_font_size(pump, 35);
+
+    alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
+
+    if (credits_button())
+      return CREDITS_MENU;
+
+    alfont_set_font_size(pump, 32);
+    alfont_textout_centre_aa(mb, pump, "IN GAME OPTIONS", 764, 20, 0xFFFFFF);
+    alfont_textout_centre_aa(mb, pump, "SETTINGS", 764, 290, 0xFFFFFF);
+    alfont_set_font_size(pump, 30);
+    alfont_textout_centre_aa(mb, pump, "Number of laps", 700, 60, 0);
+    // if (checkbox(800, 60, (nlaps == 3)))
+    // nlaps = 3;
+    rect(mb, 800, 60, 820, 80, 0);
+    rect(mb, 840, 60, 860, 80, 0);
+    rect(mb, 880, 60, 900, 80, 0);
+    alfont_textout_centre_aa(mb, pump, "3", 830, 60, 0);
+    alfont_textout_centre_aa(mb, pump, "5", 870, 60, 0);
+    alfont_textout_centre_aa(mb, pump, "7", 910, 60, 0);
+    alfont_textout_centre_aa(mb, pump, "Color of Player's boat", 700, 90, 0);
+    alfont_textout_centre_aa(mb, pump, "Color of CPU's boat", 700, 190, 0);
+    rect(mb, 800, 90, 820, 110, 0);
+    rect(mb, 800, 190, 820, 210, 0);
+    rect(mb, 800, 120, 820, 140, 0);
+    rect(mb, 800, 220, 820, 240, 0);
+    rect(mb, 800, 150, 820, 170, 0);
+    rect(mb, 800, 250, 820, 270, 0);
+    alfont_textout_aa(mb, pump, "Red", 830, 90, 0);
+    alfont_textout_aa(mb, pump, "Green", 830, 120, 0);
+    alfont_textout_aa(mb, pump, "Blue", 830, 150, 0);
+    alfont_textout_aa(mb, pump, "Red", 830, 190, 0);
+    alfont_textout_aa(mb, pump, "Green", 830, 220, 0);
+    alfont_textout_aa(mb, pump, "Blue", 830, 250, 0);
+    alfont_textout_centre_aa(mb, pump, "Resolution", 700, 330, 0);
+    alfont_textout_centre_aa(mb, pump, "Color Depth", 700, 420, 0);
+    alfont_textout_centre_aa(mb, pump, "Volume", 700, 510, 0);
+    rect(mb, 800, 330, 820, 350, 0);
+    rect(mb, 800, 360, 820, 380, 0);
+    rect(mb, 800, 390, 820, 410, 0);
+    alfont_textout_aa(mb, pump, "800x600", 830, 330, 0);
+    alfont_textout_aa(mb, pump, "1024x768", 830, 360, 0);
+    alfont_textout_aa(mb, pump, "1280x1024", 830, 390, 0);
+    rect(mb, 800, 420, 820, 440, 0);
+    rect(mb, 800, 450, 820, 470, 0);
+    rect(mb, 800, 480, 820, 500, 0);
+    alfont_textout_aa(mb, pump, "16", 830, 420, 0);
+    alfont_textout_aa(mb, pump, "24", 830, 450, 0);
+    alfont_textout_aa(mb, pump, "32", 830, 480, 0);
+    rect(mb, 800, 510, 820, 530, 0);
+    rect(mb, 800, 540, 820, 560, 0);
+    rect(mb, 800, 570, 820, 590, 0);
+    alfont_textout_aa(mb, pump, "Mute", 830, 510, 0);
+    alfont_textout_aa(mb, pump, "Normal", 830, 540, 0);
+    alfont_textout_aa(mb, pump, "Loud", 830, 570, 0);
+
+    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 60 && mouse_y < 80 && mouse_b & 1)
+      nlaps = 3;
+    if (mouse_x > 840 && mouse_x < 860 && mouse_y > 60 && mouse_y < 80 && mouse_b & 1)
+      nlaps = 5;
+    if (mouse_x > 880 && mouse_x < 900 && mouse_y > 60 && mouse_y < 80 && mouse_b & 1)
+      nlaps = 7;
+    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 90 && mouse_y < 110 && mouse_b & 1)
+      player1_boat_color = 0;
+    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 120 && mouse_y < 140 && mouse_b & 1)
+      player1_boat_color = 1;
+    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 150 && mouse_y < 170 && mouse_b & 1)
+      player1_boat_color = 2;
+    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 190 && mouse_y < 210 && mouse_b & 1)
+      player2_boat_color = 0;
+    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 220 && mouse_y < 240 && mouse_b & 1)
+      player2_boat_color = 1;
+    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 250 && mouse_y < 270 && mouse_b & 1)
+      player2_boat_color = 2;
+    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 330 && mouse_y < 350 && mouse_b & 1)
+      res = 0;
+    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 360 && mouse_y < 380 && mouse_b & 1)
+      res = 1;
+    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 390 && mouse_y < 410 && mouse_b & 1)
+      res = 2;
+    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 420 && mouse_y < 440 && mouse_b & 1)
+      depth = 0;
+    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 450 && mouse_y < 470 && mouse_b & 1)
+      depth = 1;
+    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 480 && mouse_y < 490 && mouse_b & 1)
+      depth = 2;
+    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 510 && mouse_y < 530 && mouse_b & 1)
+      vol = 0;
+    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 540 && mouse_y < 560 && mouse_b & 1)
+      vol = 180;
+    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 570 && mouse_y < 590 && mouse_b & 1)
+      vol = 255;
+
+    if (nlaps == 3)
+      alfont_textout_aa(mb, pump, "X", 800, 60, 0);
+    else if (nlaps == 5)
+      alfont_textout_aa(mb, pump, "X", 840, 60, 0);
+    else
+      alfont_textout_aa(mb, pump, "X", 880, 60, 0);
+    if (player1_boat_color == 0)
+      alfont_textout_aa(mb, pump, "X", 800, 90, 0);
+    else if (player1_boat_color == 1)
+      alfont_textout_aa(mb, pump, "X", 800, 120, 0);
+    else
+      alfont_textout_aa(mb, pump, "X", 800, 150, 0);
+    if (player2_boat_color == 0)
+      alfont_textout_aa(mb, pump, "X", 800, 190, 0);
+    else if (player2_boat_color == 1)
+      alfont_textout_aa(mb, pump, "X", 800, 220, 0);
+    else
+      alfont_textout_aa(mb, pump, "X", 800, 250, 0);
+    if (res == 0)
+      alfont_textout_aa(mb, pump, "X", 800, 330, 0);
+    else if (res == 1)
+      alfont_textout_aa(mb, pump, "X", 800, 360, 0);
+    else
+      alfont_textout_aa(mb, pump, "X", 800, 390, 0);
+    if (depth == 0)
+      alfont_textout_aa(mb, pump, "X", 800, 420, 0);
+    else if (depth == 1)
+      alfont_textout_aa(mb, pump, "X", 800, 450, 0);
+    else
+      alfont_textout_aa(mb, pump, "X", 800, 480, 0);
+    if (vol == 0)
+      alfont_textout_aa(mb, pump, "X", 800, 510, 0);
+    else if (vol == 180)
+      alfont_textout_aa(mb, pump, "X", 800, 540, 0);
+    else
+      alfont_textout_aa(mb, pump, "X", 800, 570, 0);
+
+    alfont_set_font_size(pump, 75);
+    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
+
+    show_mouse(mb);
+    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
+  }
+}
+
+enum Scene credits_menu_loop()
+{
+  while (1)
+  {
+    show_mouse(NULL);
+    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
+    alfont_set_font_size(pump, 50);
+
+    if (play_button())
+      return PLAY_MENU;
+
+    if (exit_button())
+      return EXIT;
+
+    alfont_set_font_size(pump, 35);
+
+    if (options_button())
+      return OPTIONS_MENU;
+
+    alfont_textprintf_centre_aa(mb, pump, 586, 608, 0xFFFFFF, "Credits");
+
+    alfont_textprintf_centre_aa(mb, pump, 206, 417, 0, "Programming");
+    alfont_textprintf_centre_aa(mb, pump, 764, 417, 0, "Graphics");
+    alfont_set_font_size(pump, 70);
+    alfont_textprintf_centre_aa(mb, pump, 206, 437, 0, "Daniel Lovasko");
+    alfont_textprintf_centre_aa(mb, pump, 764, 437, 0, "Dominik Lukac");
+    alfont_set_font_size(pump, 75);
+    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
+    show_mouse(mb);
+    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
+  }
+}
+
+enum Scene game_loop()
+{
   install_int(mooove_time, 1000);
   while (!key[KEY_ESC])
   {
-
     rotate(white_point_bmp, rotated_white_point_bmp, player1.rot);
     int boat_front_x, boat_front_y;
     for (int rx = 0; rx < rotated_white_point_bmp->w; rx++)
@@ -704,7 +1019,7 @@ game:
         blit(mb, screen, 0, 0, 0, 0, 1024, 768);
         //       rest(3000);
         if (key[KEY_ESC])
-          goto main_menu;
+          return MAIN_MENU;
       }
       if (player2.laps == winning_laps)
       {
@@ -716,7 +1031,7 @@ game:
         blit(mb, screen, 0, 0, 0, 0, 1024, 768);
         // rest(3000);
         if (key[KEY_ESC])
-          goto main_menu;
+          return MAIN_MENU;
       }
     }
     else
@@ -727,324 +1042,10 @@ game:
         alfont_set_font_size(pump, 70);
         alfont_textprintf_centre_aa(screen, pump, 512, 384, 0xFFFFFF, "your total time in %d lasp is %d:%d", winning_laps, global_min, global_sec);
         rest(2500);
-        goto main_menu;
+        return MAIN_MENU;
       }
     }
 
-    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
-  }
-
-exit:
-  printf("smrt blenderu");
-}
-END_OF_MAIN()
-
-int main_menu_button(const char *label, int x_min, int y_min, int x_max, int y_max, int label_x, int label_y)
-{
-  rect(mb, x_min, y_min, x_max, y_max, makecol(0, 0, 0));
-  if (mouse_x > x_min && mouse_y > y_min && mouse_x < x_max && mouse_y < y_max)
-  {
-    alfont_textprintf_centre_aa(mb, pump, label_x, label_y, 0xFFFFFF, label);
-    if (mouse_b & 1)
-      return 1;
-  }
-  else
-    alfont_textprintf_centre_aa(mb, pump, label_x, label_y, 0, label);
-  return 0;
-}
-
-int play_button()
-{
-  return main_menu_button("Play", 162, 588, 258, 657, 211, 608);
-}
-
-int exit_button()
-{
-  return main_menu_button("Exit", 666, 601, 756, 658, 707, 608);
-}
-
-int options_button()
-{
-  return main_menu_button("Options", 312, 597, 404, 654, 357, 608);
-}
-
-int credits_button()
-{
-  return main_menu_button("Credits", 546, 597, 635, 656, 586, 608);
-}
-
-int career_button()
-{
-  int pressed = main_menu_button("Career", 100, 340, 306, 390, 206, 357);
-  if (pressed)
-    game_mode = MODE_CAREER;
-  return pressed;
-}
-
-int practice_button()
-{
-  int pressed = main_menu_button("Practice", 100, 390, 306, 440, 206, 397);
-  if (pressed)
-    game_mode = MODE_PRACTICE;
-  return pressed;
-}
-
-int multiplayer_button()
-{
-  int pressed = main_menu_button("Multiplayer", 100, 440, 306, 490, 206, 437);
-  if (pressed)
-    game_mode = MODE_MULTIPLAYER;
-  return pressed;
-}
-
-enum Scene main_menu_loop()
-{
-  play_sample(main_sample, 255, 128, 1000, 1);
-  while (1)
-  {
-    show_mouse(NULL);
-    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
-    alfont_set_font_size(pump, 50);
-
-    if (play_button())
-      return PLAY_MENU;
-
-    if (exit_button())
-      return EXIT;
-
-    alfont_set_font_size(pump, 35);
-
-    if (options_button())
-      return OPTIONS_MENU;
-
-    if (credits_button())
-      return CREDITS_MENU;
-
-    alfont_set_font_size(pump, 75);
-    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
-    show_mouse(mb);
-    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
-  }
-}
-
-enum Scene play_menu_loop()
-{
-  while (1)
-  {
-    show_mouse(NULL);
-    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
-    alfont_set_font_size(pump, 50);
-
-    alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
-
-    if (exit_button())
-      return EXIT;
-
-    alfont_set_font_size(pump, 35);
-
-    if (options_button())
-      return OPTIONS_MENU;
-
-    if (credits_button())
-      return CREDITS_MENU;
-
-    alfont_set_font_size(pump, 60);
-
-    if (career_button())
-      return GAME;
-
-    if (practice_button())
-      return GAME;
-
-    if (multiplayer_button())
-      return GAME;
-
-    alfont_set_font_size(pump, 75);
-    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
-    show_mouse(mb);
-    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
-  }
-}
-
-enum Scene options_menu_loop()
-{
-  while (1)
-  {
-    show_mouse(NULL);
-    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
-    alfont_set_font_size(pump, 50);
-
-    if (play_button())
-      return PLAY_MENU;
-
-    if (exit_button())
-      return EXIT;
-
-    alfont_set_font_size(pump, 35);
-
-    alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
-
-    if (credits_button())
-      return CREDITS_MENU;
-
-    alfont_set_font_size(pump, 32);
-    alfont_textout_centre_aa(mb, pump, "IN GAME OPTIONS", 764, 20, 0xFFFFFF);
-    alfont_textout_centre_aa(mb, pump, "SETTINGS", 764, 290, 0xFFFFFF);
-    alfont_set_font_size(pump, 30);
-    alfont_textout_centre_aa(mb, pump, "Number of laps", 700, 60, 0);
-    rect(mb, 800, 60, 820, 80, 0);
-    rect(mb, 840, 60, 860, 80, 0);
-    rect(mb, 880, 60, 900, 80, 0);
-    alfont_textout_centre_aa(mb, pump, "3", 830, 60, 0);
-    alfont_textout_centre_aa(mb, pump, "5", 870, 60, 0);
-    alfont_textout_centre_aa(mb, pump, "7", 910, 60, 0);
-    alfont_textout_centre_aa(mb, pump, "Color of Player's boat", 700, 90, 0);
-    alfont_textout_centre_aa(mb, pump, "Color of CPU's boat", 700, 190, 0);
-    rect(mb, 800, 90, 820, 110, 0);
-    rect(mb, 800, 190, 820, 210, 0);
-    rect(mb, 800, 120, 820, 140, 0);
-    rect(mb, 800, 220, 820, 240, 0);
-    rect(mb, 800, 150, 820, 170, 0);
-    rect(mb, 800, 250, 820, 270, 0);
-    alfont_textout_aa(mb, pump, "Red", 830, 90, 0);
-    alfont_textout_aa(mb, pump, "Green", 830, 120, 0);
-    alfont_textout_aa(mb, pump, "Blue", 830, 150, 0);
-    alfont_textout_aa(mb, pump, "Red", 830, 190, 0);
-    alfont_textout_aa(mb, pump, "Green", 830, 220, 0);
-    alfont_textout_aa(mb, pump, "Blue", 830, 250, 0);
-    alfont_textout_centre_aa(mb, pump, "Resolution", 700, 330, 0);
-    alfont_textout_centre_aa(mb, pump, "Color Depth", 700, 420, 0);
-    alfont_textout_centre_aa(mb, pump, "Volume", 700, 510, 0);
-    rect(mb, 800, 330, 820, 350, 0);
-    rect(mb, 800, 360, 820, 380, 0);
-    rect(mb, 800, 390, 820, 410, 0);
-    alfont_textout_aa(mb, pump, "800x600", 830, 330, 0);
-    alfont_textout_aa(mb, pump, "1024x768", 830, 360, 0);
-    alfont_textout_aa(mb, pump, "1280x1024", 830, 390, 0);
-    rect(mb, 800, 420, 820, 440, 0);
-    rect(mb, 800, 450, 820, 470, 0);
-    rect(mb, 800, 480, 820, 500, 0);
-    alfont_textout_aa(mb, pump, "16", 830, 420, 0);
-    alfont_textout_aa(mb, pump, "24", 830, 450, 0);
-    alfont_textout_aa(mb, pump, "32", 830, 480, 0);
-    rect(mb, 800, 510, 820, 530, 0);
-    rect(mb, 800, 540, 820, 560, 0);
-    rect(mb, 800, 570, 820, 590, 0);
-    alfont_textout_aa(mb, pump, "Mute", 830, 510, 0);
-    alfont_textout_aa(mb, pump, "Normal", 830, 540, 0);
-    alfont_textout_aa(mb, pump, "Loud", 830, 570, 0);
-
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 60 && mouse_y < 80 && mouse_b & 1)
-      nlaps = 3;
-    if (mouse_x > 840 && mouse_x < 860 && mouse_y > 60 && mouse_y < 80 && mouse_b & 1)
-      nlaps = 5;
-    if (mouse_x > 880 && mouse_x < 900 && mouse_y > 60 && mouse_y < 80 && mouse_b & 1)
-      nlaps = 7;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 90 && mouse_y < 110 && mouse_b & 1)
-      player1_boat_color = 0;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 120 && mouse_y < 140 && mouse_b & 1)
-      player1_boat_color = 1;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 150 && mouse_y < 170 && mouse_b & 1)
-      player1_boat_color = 2;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 190 && mouse_y < 210 && mouse_b & 1)
-      player2_boat_color = 0;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 220 && mouse_y < 240 && mouse_b & 1)
-      player2_boat_color = 1;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 250 && mouse_y < 270 && mouse_b & 1)
-      player2_boat_color = 2;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 330 && mouse_y < 350 && mouse_b & 1)
-      res = 0;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 360 && mouse_y < 380 && mouse_b & 1)
-      res = 1;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 390 && mouse_y < 410 && mouse_b & 1)
-      res = 2;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 420 && mouse_y < 440 && mouse_b & 1)
-      depth = 0;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 450 && mouse_y < 470 && mouse_b & 1)
-      depth = 1;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 480 && mouse_y < 490 && mouse_b & 1)
-      depth = 2;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 510 && mouse_y < 530 && mouse_b & 1)
-      vol = 0;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 540 && mouse_y < 560 && mouse_b & 1)
-      vol = 180;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 570 && mouse_y < 590 && mouse_b & 1)
-      vol = 255;
-
-    if (nlaps == 3)
-      alfont_textout_aa(mb, pump, "X", 800, 60, 0);
-    else if (nlaps == 5)
-      alfont_textout_aa(mb, pump, "X", 840, 60, 0);
-    else
-      alfont_textout_aa(mb, pump, "X", 880, 60, 0);
-    if (player1_boat_color == 0)
-      alfont_textout_aa(mb, pump, "X", 800, 90, 0);
-    else if (player1_boat_color == 1)
-      alfont_textout_aa(mb, pump, "X", 800, 120, 0);
-    else
-      alfont_textout_aa(mb, pump, "X", 800, 150, 0);
-    if (player2_boat_color == 0)
-      alfont_textout_aa(mb, pump, "X", 800, 190, 0);
-    else if (player2_boat_color == 1)
-      alfont_textout_aa(mb, pump, "X", 800, 220, 0);
-    else
-      alfont_textout_aa(mb, pump, "X", 800, 250, 0);
-    if (res == 0)
-      alfont_textout_aa(mb, pump, "X", 800, 330, 0);
-    else if (res == 1)
-      alfont_textout_aa(mb, pump, "X", 800, 360, 0);
-    else
-      alfont_textout_aa(mb, pump, "X", 800, 390, 0);
-    if (depth == 0)
-      alfont_textout_aa(mb, pump, "X", 800, 420, 0);
-    else if (depth == 1)
-      alfont_textout_aa(mb, pump, "X", 800, 450, 0);
-    else
-      alfont_textout_aa(mb, pump, "X", 800, 480, 0);
-    if (vol == 0)
-      alfont_textout_aa(mb, pump, "X", 800, 510, 0);
-    else if (vol == 180)
-      alfont_textout_aa(mb, pump, "X", 800, 540, 0);
-    else
-      alfont_textout_aa(mb, pump, "X", 800, 570, 0);
-
-    alfont_set_font_size(pump, 75);
-    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
-
-    show_mouse(mb);
-    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
-  }
-}
-
-enum Scene credits_menu_loop()
-{
-  while (1)
-  {
-    show_mouse(NULL);
-    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
-    alfont_set_font_size(pump, 50);
-
-    if (play_button())
-      return PLAY_MENU;
-
-    if (exit_button())
-      return EXIT;
-
-    alfont_set_font_size(pump, 35);
-
-    if (options_button())
-      return OPTIONS_MENU;
-
-    alfont_textprintf_centre_aa(mb, pump, 586, 608, 0xFFFFFF, "Credits");
-
-    alfont_textprintf_centre_aa(mb, pump, 206, 417, 0, "Programming");
-    alfont_textprintf_centre_aa(mb, pump, 764, 417, 0, "Graphics");
-    alfont_set_font_size(pump, 70);
-    alfont_textprintf_centre_aa(mb, pump, 206, 437, 0, "Daniel Lovasko");
-    alfont_textprintf_centre_aa(mb, pump, 764, 437, 0, "Dominik Lukac");
-    alfont_set_font_size(pump, 75);
-    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
-    show_mouse(mb);
     blit(mb, screen, 0, 0, 0, 0, 1024, 768);
   }
 }

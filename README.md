@@ -12,3 +12,8 @@ How to compile the project on windows with the original workflow:
 - menu buttons (play menu buttons and play button itself) are a bit wonky, change the bboxes.
 - options don't work, don't save or read from a file and don't apply.
 - you can select the same color for both boats. (that is, if the options would actually work.)
+- main music glitches out at the end and doesn't loop (even though it should)
+
+## What to work on tomorrow:
+
+- checkboxes in options
