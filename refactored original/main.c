@@ -69,7 +69,6 @@ typedef struct boat
 BOAT player1, player2;
 BITMAP *mb, *menu;
 
-// BITMAP *boat, *ms, *boatr;
 int AI_pos = 0;
 int npts = 50;
 int xpos[100 * 26];
