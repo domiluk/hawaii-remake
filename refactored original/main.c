@@ -556,9 +556,9 @@ enum Scene credits_menu_loop()
   }
 }
 
-int get_boat_front_point_color_in_alpha(BOAT player)
+int get_boat_front_point_color_in_alpha(const BOAT *player)
 {
-  rotate(white_point_bmp, rotated_white_point_bmp, player.rot);
+  rotate(white_point_bmp, rotated_white_point_bmp, player->rot);
   int boat_front_x, boat_front_y;
   for (int rx = 0; rx < rotated_white_point_bmp->w; rx++)
     for (int ry = 0; ry < rotated_white_point_bmp->h; ry++)
@@ -568,7 +568,52 @@ int get_boat_front_point_color_in_alpha(BOAT player)
         boat_front_y = ry;
       }
 
-  return getr(getpixel(alpha, player.x + boat_front_x, player.y + boat_front_y));
+  return getr(getpixel(alpha, player->x + boat_front_x, player->y + boat_front_y));
+}
+
+void boat_collision_checks(BOAT *player)
+{
+  int boat_front_point_color_in_alpha = get_boat_front_point_color_in_alpha(player);
+  int player_hit_the_land = boat_front_point_color_in_alpha == 0;
+  if (player_hit_the_land)
+  {
+    player->xv *= -0.75;
+    player->yv *= -0.75;
+  }
+
+  int player_hit_checkpoint_one = boat_front_point_color_in_alpha == 64;
+  if (player_hit_checkpoint_one)
+    player->checkpoint_one = 1;
+
+  int player_hit_checkpoint_two = boat_front_point_color_in_alpha == 128;
+  if (player_hit_checkpoint_two)
+    player->checkpoint_two = 1;
+
+  int player_hit_checkpoint_three = boat_front_point_color_in_alpha == 32;
+  if (player_hit_checkpoint_three)
+    player->checkpoint_three = 1;
+
+  int player_hit_finish_line = boat_front_point_color_in_alpha == 192;
+  if (player_hit_finish_line && player->checkpoint_one && player->checkpoint_two && player->checkpoint_three)
+  {
+    player->checkpoint_one = 0;
+    player->checkpoint_two = 0;
+    player->checkpoint_three = 0;
+    player->last_lap_sec = global_sec - player->last_lap_sec;
+    player->last_lap_min = global_min - player->last_lap_min;
+    if (player->last_lap_sec < 0)
+    {
+      player->last_lap_min--;
+      player->last_lap_sec = 60 - abs(player->last_lap_sec);
+    }
+    if (player->last_lap_sec + (player->last_lap_min) * 60 < player->best_lap_sec + (player->best_lap_min) * 60)
+    {
+      player->best_lap_sec = player->last_lap_sec;
+      player->best_lap_min = player->last_lap_min;
+    }
+    player->laps++;
+    play_sample(lap_gong, 255, 128, 1000, 0);
+  }
 }
 
 enum Scene game_loop()
@@ -576,47 +621,7 @@ enum Scene game_loop()
   install_int(mooove_time, 1000);
   while (!key[KEY_ESC])
   {
-    int boat_front_point_color_in_alpha = get_boat_front_point_color_in_alpha(player1);
-    int player1_hit_the_land = boat_front_point_color_in_alpha == 0;
-    if (player1_hit_the_land)
-    {
-      player1.xv *= -0.75;
-      player1.yv *= -0.75;
-    }
-
-    int player1_hit_checkpoint_one = boat_front_point_color_in_alpha == 64;
-    if (player1_hit_checkpoint_one)
-      player1.checkpoint_one = 1;
-
-    int player1_hit_checkpoint_two = boat_front_point_color_in_alpha == 128;
-    if (player1_hit_checkpoint_two)
-      player1.checkpoint_two = 1;
-
-    int player1_hit_checkpoint_three = boat_front_point_color_in_alpha == 32;
-    if (player1_hit_checkpoint_three)
-      player1.checkpoint_three = 1;
-
-    int player1_hit_finish_line = boat_front_point_color_in_alpha == 192;
-    if (player1_hit_finish_line && player1.checkpoint_one && player1.checkpoint_two && player1.checkpoint_three)
-    {
-      player1.checkpoint_one = 0;
-      player1.checkpoint_two = 0;
-      player1.checkpoint_three = 0;
-      player1.last_lap_sec = global_sec - player1.last_lap_sec;
-      player1.last_lap_min = global_min - player1.last_lap_min;
-      if (player1.last_lap_sec < 0)
-      {
-        player1.last_lap_min--;
-        player1.last_lap_sec = 60 - abs(player1.last_lap_sec);
-      }
-      if (player1.last_lap_sec + (player1.last_lap_min) * 60 < player1.best_lap_sec + (player1.best_lap_min) * 60)
-      {
-        player1.best_lap_sec = player1.last_lap_sec;
-        player1.best_lap_min = player1.last_lap_min;
-      }
-      player1.laps++;
-      play_sample(lap_gong, 255, 128, 1000, 0);
-    }
+    boat_collision_checks(&player1);
 
     if (key[KEY_UP]) // && getr(getpixel(alpha,boat.x + boat_front_x, boat.y + boat_front_y)) == 255)
     {
@@ -677,48 +682,7 @@ enum Scene game_loop()
 
     if (game_mode == MODE_MULTIPLAYER)
     {
-      boat_front_point_color_in_alpha = get_boat_front_point_color_in_alpha(player2);
-
-      int player2_hit_the_land = boat_front_point_color_in_alpha == 0;
-      if (player2_hit_the_land)
-      {
-        player2.xv *= -0.75;
-        player2.yv *= -0.75;
-      }
-
-      int player2_hit_checkpoint_one = boat_front_point_color_in_alpha == 64;
-      if (player2_hit_checkpoint_one)
-        player2.checkpoint_one = 1;
-
-      int player2_hit_checkpoint_two = boat_front_point_color_in_alpha == 128;
-      if (player2_hit_checkpoint_two)
-        player2.checkpoint_two = 1;
-
-      int player2_hit_checkpoint_three = boat_front_point_color_in_alpha == 32;
-      if (player2_hit_checkpoint_three)
-        player2.checkpoint_three = 1;
-
-      int player2_hit_finish_line = boat_front_point_color_in_alpha == 192;
-      if (player2_hit_finish_line && player2.checkpoint_one && player2.checkpoint_two && player2.checkpoint_three)
-      {
-        player2.checkpoint_one = 0;
-        player2.checkpoint_two = 0;
-        player2.checkpoint_three = 0;
-        player2.last_lap_sec = global_sec - player2.last_lap_sec;
-        player2.last_lap_min = global_min - player2.last_lap_min;
-        if (player2.last_lap_sec < 0)
-        {
-          player2.last_lap_min--;
-          player2.last_lap_sec = 60 - abs(player2.last_lap_sec);
-        }
-        if (player2.last_lap_sec + (player2.last_lap_min) * 60 < player2.best_lap_sec + (player2.best_lap_min) * 60)
-        {
-          player2.best_lap_sec = player2.last_lap_sec;
-          player2.best_lap_min = player2.last_lap_min;
-        }
-        player2.laps++;
-        play_sample(lap_gong, 255, 128, 1000, 0);
-      }
+      boat_collision_checks(&player2);
 
       if (key[KEY_W]) // && getr(getpixel(alpha,boat.x + boat_front_x, boat.y + boat_front_y)) == 255)
       {
