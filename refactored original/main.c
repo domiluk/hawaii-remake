@@ -571,7 +571,7 @@ int get_boat_front_point_color_in_alpha(const BOAT *player)
   return getr(getpixel(alpha, player->x + boat_front_x, player->y + boat_front_y));
 }
 
-void boat_collision_checks(BOAT *player)
+void check_boat_collisions(BOAT *player)
 {
   int boat_front_point_color_in_alpha = get_boat_front_point_color_in_alpha(player);
   int player_hit_the_land = boat_front_point_color_in_alpha == 0;
@@ -621,7 +621,7 @@ enum Scene game_loop()
   install_int(mooove_time, 1000);
   while (!key[KEY_ESC])
   {
-    boat_collision_checks(&player1);
+    check_boat_collisions(&player1);
 
     if (key[KEY_UP]) // && getr(getpixel(alpha,boat.x + boat_front_x, boat.y + boat_front_y)) == 255)
     {
@@ -682,7 +682,7 @@ enum Scene game_loop()
 
     if (game_mode == MODE_MULTIPLAYER)
     {
-      boat_collision_checks(&player2);
+      check_boat_collisions(&player2);
 
       if (key[KEY_W]) // && getr(getpixel(alpha,boat.x + boat_front_x, boat.y + boat_front_y)) == 255)
       {
