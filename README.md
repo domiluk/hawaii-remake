@@ -17,7 +17,8 @@ How to compile the project on windows with the original workflow:
 - resolutions won't work when we draw everything to a specific pixel value (and I mean everything)
 - resolutions should include some 16:9
 - main music glitches out at the end and doesn't loop (even though it should)
+- you should be able to reverse slowly (optional? find out if motorboat can do it first)
 
 ## What to work on next:
 
-- pochopit game_loop
+- find out how game_loop works

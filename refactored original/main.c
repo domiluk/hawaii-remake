@@ -556,45 +556,47 @@ enum Scene credits_menu_loop()
   }
 }
 
+int get_boat_front_point_color_in_alpha(BOAT player)
+{
+  rotate(white_point_bmp, rotated_white_point_bmp, player.rot);
+  int boat_front_x, boat_front_y;
+  for (int rx = 0; rx < rotated_white_point_bmp->w; rx++)
+    for (int ry = 0; ry < rotated_white_point_bmp->h; ry++)
+      if (getr(getpixel(rotated_white_point_bmp, rx, ry)) == 254)
+      {
+        boat_front_x = rx;
+        boat_front_y = ry;
+      }
+
+  return getr(getpixel(alpha, player.x + boat_front_x, player.y + boat_front_y));
+}
+
 enum Scene game_loop()
 {
   install_int(mooove_time, 1000);
   while (!key[KEY_ESC])
   {
-    rotate(white_point_bmp, rotated_white_point_bmp, player1.rot);
-    int boat_front_x, boat_front_y;
-    for (int rx = 0; rx < rotated_white_point_bmp->w; rx++)
-      for (int ry = 0; ry < rotated_white_point_bmp->h; ry++)
-      {
-        if (getr(getpixel(rotated_white_point_bmp, rx, ry)) == 254)
-        {
-          boat_front_x = rx;
-          boat_front_y = ry;
-        }
-      }
-
-    int boat_front_point_color = getr(getpixel(alpha, player1.x + boat_front_x, player1.y + boat_front_y));
-
-    int player1_hit_the_land = boat_front_point_color == 0;
+    int boat_front_point_color_in_alpha = get_boat_front_point_color_in_alpha(player1);
+    int player1_hit_the_land = boat_front_point_color_in_alpha == 0;
     if (player1_hit_the_land)
     {
       player1.xv *= -0.75;
       player1.yv *= -0.75;
     }
 
-    int player1_hit_checkpoint_one = boat_front_point_color == 64;
+    int player1_hit_checkpoint_one = boat_front_point_color_in_alpha == 64;
     if (player1_hit_checkpoint_one)
       player1.checkpoint_one = 1;
 
-    int player1_hit_checkpoint_two = boat_front_point_color == 128;
+    int player1_hit_checkpoint_two = boat_front_point_color_in_alpha == 128;
     if (player1_hit_checkpoint_two)
       player1.checkpoint_two = 1;
 
-    int player1_hit_checkpoint_three = boat_front_point_color == 32;
+    int player1_hit_checkpoint_three = boat_front_point_color_in_alpha == 32;
     if (player1_hit_checkpoint_three)
       player1.checkpoint_three = 1;
 
-    int player1_hit_finish_line = boat_front_point_color == 192;
+    int player1_hit_finish_line = boat_front_point_color_in_alpha == 192;
     if (player1_hit_finish_line && player1.checkpoint_one && player1.checkpoint_two && player1.checkpoint_three)
     {
       player1.checkpoint_one = 0;
@@ -675,40 +677,28 @@ enum Scene game_loop()
 
     if (game_mode == MODE_MULTIPLAYER)
     {
-      rotate(white_point_bmp, rotated_white_point_bmp, player2.rot);
+      boat_front_point_color_in_alpha = get_boat_front_point_color_in_alpha(player2);
 
-      for (int rx = 0; rx < rotated_white_point_bmp->w; rx++)
-        for (int ry = 0; ry < rotated_white_point_bmp->h; ry++)
-        {
-          if (getr(getpixel(rotated_white_point_bmp, rx, ry)) == 254)
-          {
-            boat_front_x = rx;
-            boat_front_y = ry;
-          }
-        }
-
-      boat_front_point_color = getr(getpixel(alpha, player2.x + boat_front_x, player2.y + boat_front_y));
-
-      int player2_hit_the_land = boat_front_point_color == 0;
+      int player2_hit_the_land = boat_front_point_color_in_alpha == 0;
       if (player2_hit_the_land)
       {
         player2.xv *= -0.75;
         player2.yv *= -0.75;
       }
 
-      int player2_hit_checkpoint_one = boat_front_point_color == 64;
+      int player2_hit_checkpoint_one = boat_front_point_color_in_alpha == 64;
       if (player2_hit_checkpoint_one)
         player2.checkpoint_one = 1;
 
-      int player2_hit_checkpoint_two = boat_front_point_color == 128;
+      int player2_hit_checkpoint_two = boat_front_point_color_in_alpha == 128;
       if (player2_hit_checkpoint_two)
         player2.checkpoint_two = 1;
 
-      int player2_hit_checkpoint_three = boat_front_point_color == 32;
+      int player2_hit_checkpoint_three = boat_front_point_color_in_alpha == 32;
       if (player2_hit_checkpoint_three)
         player2.checkpoint_three = 1;
 
-      int player2_hit_finish_line = boat_front_point_color == 192;
+      int player2_hit_finish_line = boat_front_point_color_in_alpha == 192;
       if (player2_hit_finish_line && player2.checkpoint_one && player2.checkpoint_two && player2.checkpoint_three)
       {
         player2.checkpoint_one = 0;
@@ -978,4 +968,5 @@ enum Scene game_loop()
 
     blit(mb, screen, 0, 0, 0, 0, 1024, 768);
   }
+  return EXIT;
 }
