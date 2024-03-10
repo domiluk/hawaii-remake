@@ -7,20 +7,40 @@
 #define MODE_CAREER 1
 #define MODE_PRACTICE 2
 
+#define DEG_TO_RADS 0.01745329252 // just multiply your degrees by this constant
+#define RADS_TO_DEG 57.2957795147 // just multiply your radians by this constant
+
 void rotate(BITMAP *bmp, BITMAP *tmp, float angle);
 
 int camup1 = 0, camup2 = 0, camleft2 = 0, camleft1 = 0;
 BITMAP *ostrov, *vsetko;
 BITMAP *alpha;
-BITMAP *bc, *wp;
+BITMAP *white_point_bmp, *rotated_white_point_bmp;
 BITMAP *panel;
-SAMPLE *dray, *spring, *main_sample;
-int AI_pos = 0;
+SAMPLE *lap_gong, *spring, *main_sample;
 int game_mode;
 int global_sec;
 int global_min;
-int res = 0, depth = 16, vol = 255, nlaps = 3, colb = 0, cols = 1;
+
+// TODO: these are set in options, never used anyway and never stored to a file or read from a file
+int res = 0, depth = 2, vol = 2, nlaps = 3, player1_boat_color = 0, player2_boat_color = 1;
 int winning_laps = 3;
+
+enum Scene
+{
+  MAIN_MENU,
+  PLAY_MENU,
+  OPTIONS_MENU,
+  CREDITS_MENU,
+  GAME,
+  EXIT
+};
+
+enum Scene main_menu_loop();
+enum Scene play_menu_loop();
+enum Scene options_menu_loop();
+enum Scene credits_menu_loop();
+enum Scene game_loop();
 
 typedef struct boat
 {
@@ -33,10 +53,10 @@ typedef struct boat
   float maxspeed;
   float speedup;
   float slowdown;
-  int round;
-  int cp_one;
-  int cp_two;
-  int cp_three;
+  int laps;
+  int checkpoint_one;
+  int checkpoint_two;
+  int checkpoint_three;
   int last_lap_sec;
   int best_lap_sec;
   int last_lap_min;
@@ -50,15 +70,11 @@ BOAT player1, player2;
 BITMAP *mb, *menu;
 
 // BITMAP *boat, *ms, *boatr;
+int AI_pos = 0;
 int npts = 50;
-int xs[100 + 1];
-int ys[100 + 1];
 int xpos[100 * 26];
 int ypos[100 * 26];
-int curspl = 0, curpt = 0;
-float beta;
 int endofgame = 0;
-float xres, yres;
 int lastx = 288, lasty = 30;
 int pp = 0;
 int pots[26][8] = {{966, 1086, 997, 1011, 1026, 966, 1061, 928},
@@ -90,22 +106,19 @@ int pots[26][8] = {{966, 1086, 997, 1011, 1026, 966, 1061, 928},
 
 void calc_AI()
 {
-  curpt = 0;
-  curspl = 0;
-  while (curspl < 9)
+  int xs[100 + 1];
+  int ys[100 + 1];
+
+  for (int curspl = 0; curspl < 9; curspl++)
   {
     calc_spline(pots[curspl], npts + 1, xs, ys);
-    curpt = 0;
-    while (curpt < npts)
+
+    for (int curpt = 0; curpt < npts; curpt++)
     {
       xpos[(curspl * npts) + curpt] = xs[curpt];
       ypos[(curspl * npts) + curpt] = ys[curpt];
-      curpt++;
     }
-    curspl++;
   }
-  curpt = 0;
-  curspl = 0;
 }
 
 int getAI_x(int pos)
@@ -120,21 +133,24 @@ int getAI_y(int pos)
 
 float getAI_rot(int pos)
 {
-  curspl = curpt / npts;
-  if (curpt == 0)
-  {
-    xres = xpos[0] - xpos[(9 * npts) - 1];
-    yres = ypos[0] - ypos[(9 * npts) - 1];
-  }
-  else
-  {
-    xres = xpos[curpt] - xpos[curpt - 1];
-    yres = ypos[curpt] - ypos[curpt - 1];
-  }
+  float beta;
+  float xres, yres;
+
+  // REFACTOR: DELETE LINE: curspl = curpt / npts;
+  // if (curpt == 0) // NOTE: curpt is never assigned anything else than 0
+  // {
+  xres = xpos[0] - xpos[(9 * npts) - 1];
+  yres = ypos[0] - ypos[(9 * npts) - 1];
+  // }
+  // else
+  // {
+  //   xres = xpos[curpt] - xpos[curpt - 1];
+  //   yres = ypos[curpt] - ypos[curpt - 1];
+  // }
   if (xres != 0)
   {
     beta = atan(yres / xres);
-    beta = beta / (2 * 3.1415926535) * 360;
+    beta = beta * RADS_TO_DEG;
   }
 
   return beta;
@@ -142,34 +158,32 @@ float getAI_rot(int pos)
 
 float getAI_xres(int pos)
 {
-  curspl = curpt / npts;
-  if (curpt == 0)
-  {
-    xres = xpos[0] - xpos[(9 * npts) - 1];
-    // yres = ypos[0] - ypos[(9*npts)-1];
-  }
-  else
-  {
-    xres = xpos[curpt] - xpos[curpt - 1];
-    // yres = ypos[curpt] - ypos[curpt-1];
-  }
+  float xres;
+  // REFACTOR: DELETE LINE: curspl = curpt / npts;
+  // if (curpt == 0) // NOTE: curpt is never assigned anything else than 0
+  // {
+  xres = xpos[0] - xpos[(9 * npts) - 1];
+  // }
+  // else
+  // {
+  //   xres = xpos[curpt] - xpos[curpt - 1];
+  // }
 
   return xres;
 }
 
 float getAI_yres(int pos)
 {
-  curspl = curpt / npts;
-  if (curpt == 0)
-  {
-    // xres = xpos[0] - xpos[(9*npts)-1];
-    yres = ypos[0] - ypos[(9 * npts) - 1];
-  }
-  else
-  {
-    xres = xpos[curpt] - xpos[curpt - 1];
-    yres = ypos[curpt] - ypos[curpt - 1];
-  }
+  float yres;
+  // REFACTOR: DELETE LINE: curspl = curpt / npts;
+  // if (curpt == 0) // NOTE: curpt is never assigned anything else than 0
+  // {
+  yres = ypos[0] - ypos[(9 * npts) - 1];
+  // }
+  // else
+  // {
+  //   yres = ypos[curpt] - ypos[curpt - 1];
+  // }
 
   return yres;
 }
@@ -187,6 +201,7 @@ void mooove_time()
 ALFONT_FONT *pump;
 int main()
 {
+  srand(time(NULL));
   allegro_init();
   alfont_init();
   install_keyboard();
@@ -195,22 +210,21 @@ int main()
   set_color_depth(desktop_color_depth());
   set_gfx_mode(GFX_AUTODETECT_WINDOWED, 1024, 768, 0, 0);
   install_sound(DIGI_AUTODETECT, MIDI_NONE, NULL);
-  srand(time(NULL));
-  calc_AI();
   alfont_text_mode(-1);
+
+  calc_AI();
 
   pump = alfont_load_font("airstream.ttf");
 
   mb = create_bitmap(SCREEN_W, SCREEN_H);
   vsetko = create_bitmap(2100, 1900);
 
-  // game_mode = MODE_MULTIPLAYER;
-
   player1.x = 996 - 100;
   player1.y = 1025 - 100;
-  player1.round = 0;
-  player1.cp_one = 0;
-  player1.cp_two = 0;
+  player1.laps = 0;
+  player1.checkpoint_one = 0;
+  player1.checkpoint_two = 0;
+  player1.checkpoint_three = 0;
   player1.xv = 0;
   player1.yv = 0;
   player1.rot = -50;
@@ -225,9 +239,10 @@ int main()
 
   player2.x = 1105 - 100;
   player2.y = 1087 - 100;
-  player2.round = 0;
-  player2.cp_one = 0;
-  player2.cp_two = 0;
+  player2.laps = 0;
+  player2.checkpoint_one = 0;
+  player2.checkpoint_two = 0;
+  player2.checkpoint_three = 0;
   player2.xv = 0;
   player2.yv = 0;
   player2.rot = -75;
@@ -240,13 +255,13 @@ int main()
   player2.slowdown = 0.08;
   player2.rotate = 1.5;
 
-  // boat.speed = 5.0;
+  white_point_bmp = create_bitmap(100, 100);
+  clear_bitmap(white_point_bmp);
+  putpixel(white_point_bmp, 97, 50, makecol(254, 255, 255));
+  putpixel(white_point_bmp, 96, 50, makecol(254, 255, 255));
 
-  bc = create_bitmap(100, 100);
-  wp = create_bitmap(100, 100);
-  putpixel(wp, 97, 50, makecol(254, 255, 255));
-  putpixel(wp, 96, 50, makecol(254, 255, 255));
-  putpixel(bc, 97, 50, makecol(254, 255, 255));
+  rotated_white_point_bmp = create_bitmap(100, 100);
+  clear_bitmap(rotated_white_point_bmp);
 
   player1.bmp = load_bitmap("lodcervena.bmp", NULL);
   player1.bmp_rot = load_bitmap("lodcervena.bmp", NULL);
@@ -256,182 +271,277 @@ int main()
   alpha = load_bitmap("alpha1.bmp", NULL);
   menu = load_bitmap("menu.bmp", NULL);
   panel = load_bitmap("panel.bmp", NULL);
-  dray = load_sample("sounds/dray.wav");
+  lap_gong = load_sample("sounds/dray.wav");
   spring = load_sample("sounds/spring.wav");
   main_sample = load_sample("main.wav");
 
   alfont_set_font_size(pump, 50);
-main_menu:
-  play_sample(main_sample, 255, 128, 1000, 0);
+
+  play_sample(main_sample, 255, 128, 1000, 1);
+
+  enum Scene next_scene = MAIN_MENU;
+  while (1)
+  {
+    switch (next_scene)
+    {
+    case MAIN_MENU:
+      next_scene = main_menu_loop();
+      break;
+    case PLAY_MENU:
+      next_scene = play_menu_loop();
+      break;
+    case OPTIONS_MENU:
+      next_scene = options_menu_loop();
+      break;
+    case CREDITS_MENU:
+      next_scene = credits_menu_loop();
+      break;
+    case GAME:
+      next_scene = game_loop();
+      break;
+    case EXIT:
+      printf("smrt blenderu");
+      exit(0);
+    }
+  }
+}
+END_OF_MAIN()
+
+int main_menu_button(const char *label, int x_min, int y_min, int x_max, int y_max, int label_x, int label_y)
+{
+  rect(mb, x_min, y_min, x_max, y_max, makecol(0, 0, 0));
+  if (mouse_x > x_min && mouse_y > y_min && mouse_x < x_max && mouse_y < y_max)
+  {
+    alfont_textprintf_centre_aa(mb, pump, label_x, label_y, 0xFFFFFF, label);
+    if (mouse_b & 1)
+      return 1;
+  }
+  else
+    alfont_textprintf_centre_aa(mb, pump, label_x, label_y, 0, label);
+  return 0;
+}
+
+int play_button()
+{
+  return main_menu_button("Play", 162, 588, 258, 657, 211, 608);
+}
+
+int exit_button()
+{
+  return main_menu_button("Exit", 666, 601, 756, 658, 707, 608);
+}
+
+int options_button()
+{
+  return main_menu_button("Options", 312, 597, 404, 654, 357, 608);
+}
+
+int credits_button()
+{
+  return main_menu_button("Credits", 546, 597, 635, 656, 586, 608);
+}
+
+int career_button()
+{
+  int pressed = main_menu_button("Career", 100, 340, 306, 390, 206, 357);
+  if (pressed)
+    game_mode = MODE_CAREER;
+  return pressed;
+}
+
+int practice_button()
+{
+  int pressed = main_menu_button("Practice", 100, 390, 306, 440, 206, 397);
+  if (pressed)
+    game_mode = MODE_PRACTICE;
+  return pressed;
+}
+
+int multiplayer_button()
+{
+  int pressed = main_menu_button("Multiplayer", 100, 440, 306, 490, 206, 437);
+  if (pressed)
+    game_mode = MODE_MULTIPLAYER;
+  return pressed;
+}
+
+int checkbox(const char *label, int x, int y, int checked)
+{
+  alfont_textout_aa(mb, pump, label, x + 30, y, 0);
+  rect(mb, x, y, x + 20, y + 20, 0);
+  if (checked)
+    alfont_textout_aa(mb, pump, "X", x, y, 0);
+  return mouse_x > x && mouse_x < x + 20 && mouse_y > y && mouse_y < y + 20 && mouse_b & 1;
+}
+
+enum Scene main_menu_loop()
+{
   while (1)
   {
     show_mouse(NULL);
     blit(menu, mb, 0, 0, 0, 0, 1024, 768);
     alfont_set_font_size(pump, 50);
-    // ply ext
-    if (mouse_x > 162 && mouse_y > 588 && mouse_x < 258 && mouse_y < 657)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
-      if (mouse_b & 1)
-        goto play_menu;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 211, 608, 0, "Play");
 
-    if (mouse_x > 666 && mouse_y > 601 && mouse_x < 756 && mouse_y < 658)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 707, 608, 0xFFFFFF, "Exit");
-      if (mouse_b & 1)
-        goto exit;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 707, 608, 0, "Exit");
+    if (play_button())
+      return PLAY_MENU;
+
+    if (exit_button())
+      return EXIT;
 
     alfont_set_font_size(pump, 35);
-    // opt crd
-    if (mouse_x > 312 && mouse_y > 597 && mouse_x < 404 && mouse_y < 654)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
-      if (mouse_b & 1)
-        goto options_menu;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 357, 608, 0, "Options");
 
-    if (mouse_x > 546 && mouse_y > 597 && mouse_x < 635 && mouse_y < 656)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 586, 608, 0xFFFFFF, "Credits");
-      if (mouse_b & 1)
-        goto credits_menu;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 586, 608, 0, "Credits");
+    if (options_button())
+      return OPTIONS_MENU;
+
+    if (credits_button())
+      return CREDITS_MENU;
 
     alfont_set_font_size(pump, 75);
     alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
     show_mouse(mb);
     blit(mb, screen, 0, 0, 0, 0, 1024, 768);
   }
-play_menu:
+}
+
+enum Scene play_menu_loop()
+{
   while (1)
   {
     show_mouse(NULL);
     blit(menu, mb, 0, 0, 0, 0, 1024, 768);
     alfont_set_font_size(pump, 50);
-    // ply ext
+
     alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
 
-    if (mouse_x > 666 && mouse_y > 601 && mouse_x < 756 && mouse_y < 658)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 707, 608, 0xFFFFFF, "Exit");
-      if (mouse_b & 1)
-        goto exit;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 707, 608, 0, "Exit");
+    if (exit_button())
+      return EXIT;
 
     alfont_set_font_size(pump, 35);
-    // opt crd
-    if (mouse_x > 312 && mouse_y > 597 && mouse_x < 404 && mouse_y < 654)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
-      if (mouse_b & 1)
-        goto options_menu;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 357, 608, 0, "Options");
 
-    if (mouse_x > 546 && mouse_y > 597 && mouse_x < 635 && mouse_y < 656)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 586, 608, 0xFFFFFF, "Credits");
-      if (mouse_b & 1)
-        goto credits_menu;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 586, 608, 0, "Credits");
+    if (options_button())
+      return OPTIONS_MENU;
+
+    if (credits_button())
+      return CREDITS_MENU;
 
     alfont_set_font_size(pump, 60);
 
-    if (mouse_x > 100 && mouse_y > 340 && mouse_x < 306 && mouse_y < 390)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 206, 357, 0xFFFFFF, "Career");
-      if (mouse_b & 1)
-      {
-        game_mode = MODE_CAREER;
-        install_int(mooove_time, 1000);
-        goto game;
-      }
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 206, 357, 0, "Career");
+    if (career_button())
+      return GAME;
 
-    if (mouse_x > 100 && mouse_y > 390 && mouse_x < 306 && mouse_y < 440)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 206, 397, 0xFFFFFF, "Practice");
-      if (mouse_b & 1)
-      {
-        game_mode = MODE_PRACTICE;
-        install_int(mooove_time, 1000);
-        goto game;
-      }
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 206, 397, 0, "Practice");
+    if (practice_button())
+      return GAME;
 
-    if (mouse_x > 100 && mouse_y > 440 && mouse_x < 306 && mouse_y < 490)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 206, 437, 0xFFFFFF, "Multiplayer");
-      if (mouse_b & 1)
-      {
-        game_mode = MODE_MULTIPLAYER;
-        install_int(mooove_time, 1000);
-        goto game;
-      }
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 206, 437, 0, "Multiplayer");
+    if (multiplayer_button())
+      return GAME;
 
     alfont_set_font_size(pump, 75);
     alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
     show_mouse(mb);
     blit(mb, screen, 0, 0, 0, 0, 1024, 768);
   }
+}
 
-credits_menu: //////////////////////////////////////////////credits
+enum Scene options_menu_loop()
+{
   while (1)
   {
     show_mouse(NULL);
     blit(menu, mb, 0, 0, 0, 0, 1024, 768);
     alfont_set_font_size(pump, 50);
-    // ply ext
-    if (mouse_x > 162 && mouse_y > 588 && mouse_x < 258 && mouse_y < 657)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
-      if (mouse_b & 1)
-        goto play_menu;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 211, 608, 0, "Play");
 
-    if (mouse_x > 666 && mouse_y > 601 && mouse_x < 756 && mouse_y < 658)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 707, 608, 0xFFFFFF, "Exit");
-      if (mouse_b & 1)
-        goto exit;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 707, 608, 0, "Exit");
+    if (play_button())
+      return PLAY_MENU;
+
+    if (exit_button())
+      return EXIT;
 
     alfont_set_font_size(pump, 35);
-    // opt crd
-    if (mouse_x > 312 && mouse_y > 597 && mouse_x < 404 && mouse_y < 654)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
-      if (mouse_b & 1)
-        goto options_menu;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 357, 608, 0, "Options");
+
+    alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
+
+    if (credits_button())
+      return CREDITS_MENU;
+
+    alfont_set_font_size(pump, 32);
+    alfont_textout_centre_aa(mb, pump, "IN GAME OPTIONS", 764, 20, 0xFFFFFF);
+    alfont_textout_centre_aa(mb, pump, "SETTINGS", 764, 290, 0xFFFFFF);
+
+    alfont_set_font_size(pump, 30);
+    alfont_textout_centre_aa(mb, pump, "Number of laps", 700, 60, 0);
+    if (checkbox("3", 800, 60, (nlaps == 3)))
+      nlaps = 3;
+    if (checkbox("5", 855, 60, (nlaps == 5)))
+      nlaps = 5;
+    if (checkbox("7", 910, 60, (nlaps == 7)))
+      nlaps = 7;
+
+    alfont_textout_centre_aa(mb, pump, "Color of Player's boat", 700, 90, 0);
+    if (checkbox("Red", 800, 90, (player1_boat_color == 0)))
+      player1_boat_color = 0;
+    if (checkbox("Green", 800, 120, (player1_boat_color == 1)))
+      player1_boat_color = 1;
+    if (checkbox("Blue", 800, 150, (player1_boat_color == 2)))
+      player1_boat_color = 2;
+
+    alfont_textout_centre_aa(mb, pump, "Color of CPU's boat", 700, 190, 0);
+    if (checkbox("Red", 800, 190, (player2_boat_color == 0)))
+      player2_boat_color = 0;
+    if (checkbox("Green", 800, 220, (player2_boat_color == 1)))
+      player2_boat_color = 1;
+    if (checkbox("Blue", 800, 250, (player2_boat_color == 2)))
+      player2_boat_color = 2;
+
+    alfont_textout_centre_aa(mb, pump, "Resolution", 700, 330, 0);
+    if (checkbox("800x600", 800, 330, (res == 0)))
+      res = 0;
+    if (checkbox("1024x768", 800, 360, (res == 1)))
+      res = 1;
+    if (checkbox("1280x1024", 800, 390, (res == 2)))
+      res = 2;
+
+    alfont_textout_centre_aa(mb, pump, "Color Depth", 700, 420, 0);
+    if (checkbox("16", 800, 420, (depth == 0)))
+      depth = 0;
+    if (checkbox("24", 800, 450, (depth == 1)))
+      depth = 1;
+    if (checkbox("32", 800, 480, (depth == 2)))
+      depth = 2;
+
+    alfont_textout_centre_aa(mb, pump, "Volume", 700, 510, 0);
+    if (checkbox("Mute", 800, 510, (vol == 0)))
+      vol = 0;
+    if (checkbox("Normal", 800, 540, (vol == 1)))
+      vol = 1;
+    if (checkbox("Loud", 800, 570, (vol == 2)))
+      vol = 2;
+
+    alfont_set_font_size(pump, 75);
+    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
+
+    show_mouse(mb);
+    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
+  }
+}
+
+enum Scene credits_menu_loop()
+{
+  while (1)
+  {
+    show_mouse(NULL);
+    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
+    alfont_set_font_size(pump, 50);
+
+    if (play_button())
+      return PLAY_MENU;
+
+    if (exit_button())
+      return EXIT;
+
+    alfont_set_font_size(pump, 35);
+
+    if (options_button())
+      return OPTIONS_MENU;
 
     alfont_textprintf_centre_aa(mb, pump, 586, 608, 0xFFFFFF, "Credits");
 
@@ -445,216 +555,52 @@ credits_menu: //////////////////////////////////////////////credits
     show_mouse(mb);
     blit(mb, screen, 0, 0, 0, 0, 1024, 768);
   }
+}
 
-options_menu:
-  ////////////////////////////////////////////////////////////////options
-  while (1)
-  {
-    show_mouse(NULL);
-    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
-    alfont_set_font_size(pump, 50);
-    // ply ext
-    if (mouse_x > 162 && mouse_y > 588 && mouse_x < 258 && mouse_y < 657)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
-      if (mouse_b & 1)
-        goto play_menu;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 211, 608, 0, "Play");
-
-    if (mouse_x > 666 && mouse_y > 601 && mouse_x < 756 && mouse_y < 658)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 707, 608, 0xFFFFFF, "Exit");
-      if (mouse_b & 1)
-        goto exit;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 707, 608, 0, "Exit");
-
-    alfont_set_font_size(pump, 35);
-    // opt crd
-    alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
-
-    if (mouse_x > 546 && mouse_y > 597 && mouse_x < 635 && mouse_y < 656)
-    {
-      alfont_textprintf_centre_aa(mb, pump, 586, 608, 0xFFFFFF, "Credits");
-      if (mouse_b & 1)
-        goto credits_menu;
-    }
-    else
-      alfont_textprintf_centre_aa(mb, pump, 586, 608, 0, "Credits");
-
-    alfont_set_font_size(pump, 32);
-    alfont_textout_centre_aa(mb, pump, "IN GAME OPTIONS", 764, 20, 0xFFFFFF);
-    alfont_textout_centre_aa(mb, pump, "SETTINGS", 764, 290, 0xFFFFFF);
-    alfont_set_font_size(pump, 30);
-    alfont_textout_centre_aa(mb, pump, "Number of laps", 700, 60, 0);
-    rect(mb, 800, 60, 820, 80, 0);
-    rect(mb, 840, 60, 860, 80, 0);
-    rect(mb, 880, 60, 900, 80, 0);
-    alfont_textout_centre_aa(mb, pump, "3", 830, 60, 0);
-    alfont_textout_centre_aa(mb, pump, "5", 870, 60, 0);
-    alfont_textout_centre_aa(mb, pump, "7", 910, 60, 0);
-    alfont_textout_centre_aa(mb, pump, "Color of Player's boat", 700, 90, 0);
-    alfont_textout_centre_aa(mb, pump, "Color of CPU's boat", 700, 190, 0);
-    rect(mb, 800, 90, 820, 110, 0);
-    rect(mb, 800, 190, 820, 210, 0);
-    rect(mb, 800, 120, 820, 140, 0);
-    rect(mb, 800, 220, 820, 240, 0);
-    rect(mb, 800, 150, 820, 170, 0);
-    rect(mb, 800, 250, 820, 270, 0);
-    alfont_textout_aa(mb, pump, "Red", 830, 90, 0);
-    alfont_textout_aa(mb, pump, "Green", 830, 120, 0);
-    alfont_textout_aa(mb, pump, "Blue", 830, 150, 0);
-    alfont_textout_aa(mb, pump, "Red", 830, 190, 0);
-    alfont_textout_aa(mb, pump, "Green", 830, 220, 0);
-    alfont_textout_aa(mb, pump, "Blue", 830, 250, 0);
-    alfont_textout_centre_aa(mb, pump, "Resolution", 700, 330, 0);
-    alfont_textout_centre_aa(mb, pump, "Color Depth", 700, 420, 0);
-    alfont_textout_centre_aa(mb, pump, "Volume", 700, 510, 0);
-    rect(mb, 800, 330, 820, 350, 0);
-    rect(mb, 800, 360, 820, 380, 0);
-    rect(mb, 800, 390, 820, 410, 0);
-    alfont_textout_aa(mb, pump, "800x600", 830, 330, 0);
-    alfont_textout_aa(mb, pump, "1024x768", 830, 360, 0);
-    alfont_textout_aa(mb, pump, "1280x1024", 830, 390, 0);
-    rect(mb, 800, 420, 820, 440, 0);
-    rect(mb, 800, 450, 820, 470, 0);
-    rect(mb, 800, 480, 820, 500, 0);
-    alfont_textout_aa(mb, pump, "16", 830, 420, 0);
-    alfont_textout_aa(mb, pump, "24", 830, 450, 0);
-    alfont_textout_aa(mb, pump, "32", 830, 480, 0);
-    rect(mb, 800, 510, 820, 530, 0);
-    rect(mb, 800, 540, 820, 560, 0);
-    rect(mb, 800, 570, 820, 590, 0);
-    alfont_textout_aa(mb, pump, "Mute", 830, 510, 0);
-    alfont_textout_aa(mb, pump, "Normal", 830, 540, 0);
-    alfont_textout_aa(mb, pump, "Loud", 830, 570, 0);
-
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 60 && mouse_y < 80 && mouse_b & 1)
-      nlaps = 3;
-    if (mouse_x > 840 && mouse_x < 860 && mouse_y > 60 && mouse_y < 80 && mouse_b & 1)
-      nlaps = 5;
-    if (mouse_x > 880 && mouse_x < 900 && mouse_y > 60 && mouse_y < 80 && mouse_b & 1)
-      nlaps = 7;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 90 && mouse_y < 110 && mouse_b & 1)
-      colb = 0;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 120 && mouse_y < 140 && mouse_b & 1)
-      colb = 1;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 150 && mouse_y < 170 && mouse_b & 1)
-      colb = 2;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 190 && mouse_y < 210 && mouse_b & 1)
-      cols = 0;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 220 && mouse_y < 240 && mouse_b & 1)
-      cols = 1;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 250 && mouse_y < 270 && mouse_b & 1)
-      cols = 2;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 330 && mouse_y < 350 && mouse_b & 1)
-      res = 0;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 360 && mouse_y < 380 && mouse_b & 1)
-      res = 1;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 390 && mouse_y < 410 && mouse_b & 1)
-      res = 2;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 420 && mouse_y < 440 && mouse_b & 1)
-      depth = 0;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 450 && mouse_y < 470 && mouse_b & 1)
-      depth = 1;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 480 && mouse_y < 490 && mouse_b & 1)
-      depth = 2;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 510 && mouse_y < 530 && mouse_b & 1)
-      vol = 0;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 540 && mouse_y < 560 && mouse_b & 1)
-      vol = 180;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 570 && mouse_y < 590 && mouse_b & 1)
-      vol = 255;
-
-    if (nlaps == 3)
-      alfont_textout_aa(mb, pump, "X", 800, 60, 0);
-    else if (nlaps == 5)
-      alfont_textout_aa(mb, pump, "X", 840, 60, 0);
-    else
-      alfont_textout_aa(mb, pump, "X", 880, 60, 0);
-    if (colb == 0)
-      alfont_textout_aa(mb, pump, "X", 800, 90, 0);
-    else if (colb == 1)
-      alfont_textout_aa(mb, pump, "X", 800, 120, 0);
-    else
-      alfont_textout_aa(mb, pump, "X", 800, 150, 0);
-    if (cols == 0)
-      alfont_textout_aa(mb, pump, "X", 800, 190, 0);
-    else if (cols == 1)
-      alfont_textout_aa(mb, pump, "X", 800, 220, 0);
-    else
-      alfont_textout_aa(mb, pump, "X", 800, 250, 0);
-    if (res == 0)
-      alfont_textout_aa(mb, pump, "X", 800, 330, 0);
-    else if (res == 1)
-      alfont_textout_aa(mb, pump, "X", 800, 360, 0);
-    else
-      alfont_textout_aa(mb, pump, "X", 800, 390, 0);
-    if (depth == 0)
-      alfont_textout_aa(mb, pump, "X", 800, 420, 0);
-    else if (depth == 1)
-      alfont_textout_aa(mb, pump, "X", 800, 450, 0);
-    else
-      alfont_textout_aa(mb, pump, "X", 800, 480, 0);
-    if (vol == 0)
-      alfont_textout_aa(mb, pump, "X", 800, 510, 0);
-    else if (vol == 180)
-      alfont_textout_aa(mb, pump, "X", 800, 540, 0);
-    else
-      alfont_textout_aa(mb, pump, "X", 800, 570, 0);
-
-    alfont_set_font_size(pump, 75);
-    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
-
-    show_mouse(mb);
-    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
-  }
-
-game:
+enum Scene game_loop()
+{
+  install_int(mooove_time, 1000);
   while (!key[KEY_ESC])
   {
-
-    rotate(wp, bc, player1.rot);
-    int gx, gy;
-    for (int rx = 0; rx < bc->w; rx++)
-      for (int ry = 0; ry < bc->h; ry++)
+    rotate(white_point_bmp, rotated_white_point_bmp, player1.rot);
+    int boat_front_x, boat_front_y;
+    for (int rx = 0; rx < rotated_white_point_bmp->w; rx++)
+      for (int ry = 0; ry < rotated_white_point_bmp->h; ry++)
       {
-        if (getr(getpixel(bc, rx, ry)) == 254)
+        if (getr(getpixel(rotated_white_point_bmp, rx, ry)) == 254)
         {
-          gx = rx;
-          gy = ry;
+          boat_front_x = rx;
+          boat_front_y = ry;
         }
       }
 
-    if (getr(getpixel(alpha, player1.x + gx, player1.y + gy)) == 0)
-    {
-      /*boat.x -= cos(boat.rot/360 * 2 * 3.1415926535)*boat.xv;
-boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
+    int boat_front_point_color = getr(getpixel(alpha, player1.x + boat_front_x, player1.y + boat_front_y));
 
+    int player1_hit_the_land = boat_front_point_color == 0;
+    if (player1_hit_the_land)
+    {
       player1.xv *= -0.75;
       player1.yv *= -0.75;
     }
 
-    if (getr(getpixel(alpha, player1.x + gx, player1.y + gy)) == 64)
+    int player1_hit_checkpoint_one = boat_front_point_color == 64;
+    if (player1_hit_checkpoint_one)
+      player1.checkpoint_one = 1;
+
+    int player1_hit_checkpoint_two = boat_front_point_color == 128;
+    if (player1_hit_checkpoint_two)
+      player1.checkpoint_two = 1;
+
+    int player1_hit_checkpoint_three = boat_front_point_color == 32;
+    if (player1_hit_checkpoint_three)
+      player1.checkpoint_three = 1;
+
+    int player1_hit_finish_line = boat_front_point_color == 192;
+    if (player1_hit_finish_line && player1.checkpoint_one && player1.checkpoint_two && player1.checkpoint_three)
     {
-      player1.cp_one = 1;
-    }
-    if (getr(getpixel(alpha, player1.x + gx, player1.y + gy)) == 128)
-    {
-      player1.cp_two = 1;
-    }
-    if (getr(getpixel(alpha, player1.x + gx, player1.y + gy)) == 32)
-    {
-      player1.cp_three = 1;
-    }
-    if (getr(getpixel(alpha, player1.x + gx, player1.y + gy)) == 192 && player1.cp_one == 1 && player1.cp_two == 1 && player1.cp_three == 1)
-    {
-      player1.cp_one = 0;
-      player1.cp_two = 0;
-      player1.cp_three = 0;
+      player1.checkpoint_one = 0;
+      player1.checkpoint_two = 0;
+      player1.checkpoint_three = 0;
       player1.last_lap_sec = global_sec - player1.last_lap_sec;
       player1.last_lap_min = global_min - player1.last_lap_min;
       if (player1.last_lap_sec < 0)
@@ -667,14 +613,14 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
         player1.best_lap_sec = player1.last_lap_sec;
         player1.best_lap_min = player1.last_lap_min;
       }
-      player1.round++;
-      play_sample(dray, 255, 128, 1000, 0);
+      player1.laps++;
+      play_sample(lap_gong, 255, 128, 1000, 0);
     }
 
-    if (key[KEY_UP]) // && getr(getpixel(alpha,boat.x + gx, boat.y + gy)) == 255)
+    if (key[KEY_UP]) // && getr(getpixel(alpha,boat.x + boat_front_x, boat.y + boat_front_y)) == 255)
     {
-      player1.x += cos(player1.rot / 360 * 2 * 3.1415926535) * player1.xv;
-      player1.y += sin(player1.rot / 360 * 2 * 3.1415926535) * player1.yv;
+      player1.x += cos(player1.rot * DEG_TO_RADS) * player1.xv;
+      player1.y += sin(player1.rot * DEG_TO_RADS) * player1.yv;
       if (player1.xv < player1.maxspeed && player1.yv < player1.maxspeed)
       {
         player1.xv += player1.speedup;
@@ -693,8 +639,8 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
     }
     else
     {
-      player1.x += cos(player1.rot / 360 * 2 * 3.1415926535) * player1.xv;
-      player1.y += sin(player1.rot / 360 * 2 * 3.1415926535) * player1.yv;
+      player1.x += cos(player1.rot * DEG_TO_RADS) * player1.xv;
+      player1.y += sin(player1.rot * DEG_TO_RADS) * player1.yv;
 
       if (key[KEY_DOWN])
       {
@@ -730,41 +676,45 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
 
     if (game_mode == MODE_MULTIPLAYER)
     {
-      rotate(wp, bc, player2.rot);
+      rotate(white_point_bmp, rotated_white_point_bmp, player2.rot);
 
-      for (int rx = 0; rx < bc->w; rx++)
-        for (int ry = 0; ry < bc->h; ry++)
+      for (int rx = 0; rx < rotated_white_point_bmp->w; rx++)
+        for (int ry = 0; ry < rotated_white_point_bmp->h; ry++)
         {
-          if (getr(getpixel(bc, rx, ry)) == 254)
+          if (getr(getpixel(rotated_white_point_bmp, rx, ry)) == 254)
           {
-            gx = rx;
-            gy = ry;
+            boat_front_x = rx;
+            boat_front_y = ry;
           }
         }
 
-      if (getr(getpixel(alpha, player2.x + gx, player2.y + gy)) == 0)
+      boat_front_point_color = getr(getpixel(alpha, player2.x + boat_front_x, player2.y + boat_front_y));
+
+      int player2_hit_the_land = boat_front_point_color == 0;
+      if (player2_hit_the_land)
       {
         player2.xv *= -0.75;
         player2.yv *= -0.75;
       }
 
-      if (getr(getpixel(alpha, player2.x + gx, player2.y + gy)) == 64)
+      int player2_hit_checkpoint_one = boat_front_point_color == 64;
+      if (player2_hit_checkpoint_one)
+        player2.checkpoint_one = 1;
+
+      int player2_hit_checkpoint_two = boat_front_point_color == 128;
+      if (player2_hit_checkpoint_two)
+        player2.checkpoint_two = 1;
+
+      int player2_hit_checkpoint_three = boat_front_point_color == 32;
+      if (player2_hit_checkpoint_three)
+        player2.checkpoint_three = 1;
+
+      int player2_hit_finish_line = boat_front_point_color == 192;
+      if (player2_hit_finish_line && player2.checkpoint_one && player2.checkpoint_two && player2.checkpoint_three)
       {
-        player2.cp_one = 1;
-      }
-      if (getr(getpixel(alpha, player2.x + gx, player2.y + gy)) == 128)
-      {
-        player2.cp_two = 1;
-      }
-      if (getr(getpixel(alpha, player2.x + gx, player2.y + gy)) == 32)
-      {
-        player2.cp_three = 1;
-      }
-      if (getr(getpixel(alpha, player2.x + gx, player2.y + gy)) == 192 && player2.cp_one == 1 && player2.cp_two == 1 && player2.cp_three == 1)
-      {
-        player2.cp_one = 0;
-        player2.cp_two = 0;
-        player2.cp_three = 0;
+        player2.checkpoint_one = 0;
+        player2.checkpoint_two = 0;
+        player2.checkpoint_three = 0;
         player2.last_lap_sec = global_sec - player2.last_lap_sec;
         player2.last_lap_min = global_min - player2.last_lap_min;
         if (player2.last_lap_sec < 0)
@@ -777,13 +727,14 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
           player2.best_lap_sec = player2.last_lap_sec;
           player2.best_lap_min = player2.last_lap_min;
         }
-        player2.round++;
+        player2.laps++;
+        play_sample(lap_gong, 255, 128, 1000, 0);
       }
 
-      if (key[KEY_W]) // && getr(getpixel(alpha,boat.x + gx, boat.y + gy)) == 255)
+      if (key[KEY_W]) // && getr(getpixel(alpha,boat.x + boat_front_x, boat.y + boat_front_y)) == 255)
       {
-        player2.x += cos(player2.rot / 360 * 2 * 3.1415926535) * player2.xv;
-        player2.y += sin(player2.rot / 360 * 2 * 3.1415926535) * player2.yv;
+        player2.x += cos(player2.rot * DEG_TO_RADS) * player2.xv;
+        player2.y += sin(player2.rot * DEG_TO_RADS) * player2.yv;
         if (player2.xv < player2.maxspeed && player2.yv < player2.maxspeed)
         {
           player2.xv += player2.speedup;
@@ -802,8 +753,8 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
       }
       else
       {
-        player2.x += cos(player2.rot / 360 * 2 * 3.1415926535) * player2.xv;
-        player2.y += sin(player2.rot / 360 * 2 * 3.1415926535) * player2.yv;
+        player2.x += cos(player2.rot * DEG_TO_RADS) * player2.xv;
+        player2.y += sin(player2.rot * DEG_TO_RADS) * player2.yv;
 
         if (key[KEY_S])
         {
@@ -893,6 +844,10 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
       blit(ostrov, mb, camleft1, camup1, 0, 0, camleft1 + 1024, camup1 + 768);
       rotate(player1.bmp, player1.bmp_rot, player1.rot + 90);
       draw_sprite(mb, player1.bmp_rot, player1.x - camleft1, player1.y - camup1);
+      // /* REFACTOR: ATTEMPT TO UNDERSTAND white_point_bmp and rotated_white_point_bmp */
+      // blit(white_point_bmp, mb, 0, 0, 300, 300, 100, 100);
+      // blit(rotated_white_point_bmp, mb, 0, 0, 500, 300, 100, 100);
+      // /* /END */
     }
 
     if (game_mode == MODE_CAREER)
@@ -921,8 +876,9 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
     int boats_distance_less_than_90 = ((player1.x - player2.x) * (player1.x - player2.x)) + ((player1.y - player2.y) * (player1.y - player2.y)) <= 90 * 90;
     if (boats_distance_less_than_90)
     {
-      // boat.xv = -getAI_xres(AI_pos)/3;
-      // boat.yv = getAI_yres(AI_pos)/3;
+      // player1.xv = -getAI_xres(AI_pos)/3;
+      // player1.yv = getAI_yres(AI_pos)/3;
+      stop_sample(spring);
       play_sample(spring, 255, 128, 1000, 0);
       if (game_mode == MODE_MULTIPLAYER)
       {
@@ -941,15 +897,15 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
       }
       if (game_mode == MODE_CAREER)
       {
-        player1.xv = cos(getAI_rot(AI_pos) / 360 * 2 * 3.1415926535) * 5;
-        player1.yv = sin(getAI_rot(AI_pos) / 360 * 2 * 3.1415926535) * 5;
+        player1.xv = cos(getAI_rot(AI_pos) * DEG_TO_RADS) * 5;
+        player1.yv = sin(getAI_rot(AI_pos) * DEG_TO_RADS) * 5;
         player1.rot = getAI_rot(AI_pos);
 
-        player2.xv = cos(player1.rot / 360 * 2 * 3.14);
-        player2.yv = sin(player1.rot / 360 * 2 * 3.14);
+        player2.xv = cos(player1.rot * DEG_TO_RADS);
+        player2.yv = sin(player1.rot * DEG_TO_RADS);
       }
-      // xpos[AI_pos] += cos(boat.rot/360 * 2 * 3.1415926535)*5;
-      // ypos[AI_pos] += sin(boat.rot/360 * 2 * 3.1415926535)*5;
+      // xpos[AI_pos] += cos(boat.rot* DEG_TO_RADS)*5;
+      // ypos[AI_pos] += sin(boat.rot* DEG_TO_RADS)*5;
       // calc_AI();
     }
 
@@ -959,8 +915,8 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
       if (AI_pos == npts - 1)
       {
         AI_pos = 0;
-        curspl++;
-        player2.round++;
+        // REFACTOR: DELETE LINE: curspl++;
+        player2.laps++;
       }
     }
 
@@ -972,19 +928,19 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
     alfont_set_font_size(pump, 20);
     alfont_textprintf_centre_aa(mb, pump, 512, 70, 0xFFFFFF, "powered by DL games");
     alfont_set_font_size(pump, 35);
-    alfont_textprintf_aa(mb, pump, 20, 10, 0, "Laps %d", player1.round);
+    alfont_textprintf_aa(mb, pump, 20, 10, 0, "Laps %d", player1.laps);
     alfont_textprintf_aa(mb, pump, 20, 40, 0, "Last lap time %d:%d", player1.last_lap_min, player1.last_lap_sec);
     alfont_textprintf_aa(mb, pump, 20, 70, 0, "Best lap time %d:%d", player1.best_lap_min, player1.best_lap_sec);
     if (game_mode == MODE_MULTIPLAYER)
     {
-      alfont_textprintf_aa(mb, pump, 810, 10, 0, "Laps %d", player2.round);
+      alfont_textprintf_aa(mb, pump, 810, 10, 0, "Laps %d", player2.laps);
       alfont_textprintf_aa(mb, pump, 810, 40, 0, "Last lap time %d:%d", player2.last_lap_min, player2.last_lap_sec);
       alfont_textprintf_aa(mb, pump, 810, 70, 0, "Best lap time %d:%d", player2.best_lap_min, player2.best_lap_sec);
     }
-    // textprintf(mb,font,20,20,1024,"%d", super.round);
+
     if (game_mode != MODE_PRACTICE)
     {
-      if (player1.round == winning_laps)
+      if (player1.laps == winning_laps)
       {
         clear_to_color(mb, 0);
         alfont_set_font_size(pump, 75);
@@ -994,9 +950,9 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
         blit(mb, screen, 0, 0, 0, 0, 1024, 768);
         //       rest(3000);
         if (key[KEY_ESC])
-          goto main_menu;
+          return MAIN_MENU;
       }
-      if (player2.round == winning_laps)
+      if (player2.laps == winning_laps)
       {
         clear_to_color(mb, 0);
         alfont_set_font_size(pump, 75);
@@ -1006,24 +962,21 @@ boat.y -= sin(boat.rot/360 * 2 * 3.1415926535)*boat.yv;*/
         blit(mb, screen, 0, 0, 0, 0, 1024, 768);
         // rest(3000);
         if (key[KEY_ESC])
-          goto main_menu;
+          return MAIN_MENU;
       }
     }
     else
     {
-      if (player1.round == winning_laps)
+      if (player1.laps == winning_laps)
       {
         clear_to_color(screen, 0);
         alfont_set_font_size(pump, 70);
         alfont_textprintf_centre_aa(screen, pump, 512, 384, 0xFFFFFF, "your total time in %d lasp is %d:%d", winning_laps, global_min, global_sec);
         rest(2500);
-        goto main_menu;
+        return MAIN_MENU;
       }
     }
 
     blit(mb, screen, 0, 0, 0, 0, 1024, 768);
   }
-exit:
-  printf("smrt blenderu");
 }
-END_OF_MAIN()
