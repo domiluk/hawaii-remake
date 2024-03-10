@@ -20,7 +20,4 @@ How to compile the project on windows with the original workflow:
 
 ## What to work on today:
 
-- checkboxes in options
-- labels for checkboxes part of checkbox function
-
 ## What to work on tomorrow:

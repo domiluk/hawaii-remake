@@ -23,7 +23,7 @@ int global_sec;
 int global_min;
 
 // TODO: these are set in options, never used anyway and never stored to a file or read from a file
-int res = 0, depth = 16, vol = 255, nlaps = 3, player1_boat_color = 0, player2_boat_color = 1;
+int res = 0, depth = 2, vol = 2, nlaps = 3, player1_boat_color = 0, player2_boat_color = 1;
 int winning_laps = 3;
 
 enum Scene
@@ -365,8 +365,9 @@ int multiplayer_button()
   return pressed;
 }
 
-int checkbox(int x, int y, int checked)
+int checkbox(const char *label, int x, int y, int checked)
 {
+  alfont_textout_aa(mb, pump, label, x + 30, y, 0);
   rect(mb, x, y, x + 20, y + 20, 0);
   if (checked)
     alfont_textout_aa(mb, pump, "X", x, y, 0);
@@ -468,69 +469,51 @@ enum Scene options_menu_loop()
 
     alfont_set_font_size(pump, 30);
     alfont_textout_centre_aa(mb, pump, "Number of laps", 700, 60, 0);
-    alfont_textout_centre_aa(mb, pump, "3", 830, 60, 0);
-    alfont_textout_centre_aa(mb, pump, "5", 870, 60, 0);
-    alfont_textout_centre_aa(mb, pump, "7", 910, 60, 0);
-    if (checkbox(800, 60, (nlaps == 3)))
+    if (checkbox("3", 800, 60, (nlaps == 3)))
       nlaps = 3;
-    if (checkbox(840, 60, (nlaps == 5)))
+    if (checkbox("5", 855, 60, (nlaps == 5)))
       nlaps = 5;
-    if (checkbox(880, 60, (nlaps == 7)))
+    if (checkbox("7", 910, 60, (nlaps == 7)))
       nlaps = 7;
 
     alfont_textout_centre_aa(mb, pump, "Color of Player's boat", 700, 90, 0);
-    alfont_textout_aa(mb, pump, "Red", 830, 90, 0);
-    alfont_textout_aa(mb, pump, "Green", 830, 120, 0);
-    alfont_textout_aa(mb, pump, "Blue", 830, 150, 0);
-    if (checkbox(800, 90, (player1_boat_color == 0)))
+    if (checkbox("Red", 800, 90, (player1_boat_color == 0)))
       player1_boat_color = 0;
-    if (checkbox(800, 120, (player1_boat_color == 1)))
+    if (checkbox("Green", 800, 120, (player1_boat_color == 1)))
       player1_boat_color = 1;
-    if (checkbox(800, 150, (player1_boat_color == 2)))
+    if (checkbox("Blue", 800, 150, (player1_boat_color == 2)))
       player1_boat_color = 2;
 
     alfont_textout_centre_aa(mb, pump, "Color of CPU's boat", 700, 190, 0);
-    alfont_textout_aa(mb, pump, "Red", 830, 190, 0);
-    alfont_textout_aa(mb, pump, "Green", 830, 220, 0);
-    alfont_textout_aa(mb, pump, "Blue", 830, 250, 0);
-    if (checkbox(800, 190, (player2_boat_color == 0)))
+    if (checkbox("Red", 800, 190, (player2_boat_color == 0)))
       player2_boat_color = 0;
-    if (checkbox(800, 220, (player2_boat_color == 1)))
+    if (checkbox("Green", 800, 220, (player2_boat_color == 1)))
       player2_boat_color = 1;
-    if (checkbox(800, 250, (player2_boat_color == 2)))
+    if (checkbox("Blue", 800, 250, (player2_boat_color == 2)))
       player2_boat_color = 2;
 
     alfont_textout_centre_aa(mb, pump, "Resolution", 700, 330, 0);
-    alfont_textout_aa(mb, pump, "800x600", 830, 330, 0);
-    alfont_textout_aa(mb, pump, "1024x768", 830, 360, 0);
-    alfont_textout_aa(mb, pump, "1280x1024", 830, 390, 0);
-    if (checkbox(800, 330, (res == 0)))
+    if (checkbox("800x600", 800, 330, (res == 0)))
       res = 0;
-    if (checkbox(800, 360, (res == 1)))
+    if (checkbox("1024x768", 800, 360, (res == 1)))
       res = 1;
-    if (checkbox(800, 390, (res == 2)))
+    if (checkbox("1280x1024", 800, 390, (res == 2)))
       res = 2;
 
     alfont_textout_centre_aa(mb, pump, "Color Depth", 700, 420, 0);
-    alfont_textout_aa(mb, pump, "16", 830, 420, 0);
-    alfont_textout_aa(mb, pump, "24", 830, 450, 0);
-    alfont_textout_aa(mb, pump, "32", 830, 480, 0);
-    if (checkbox(800, 420, (depth == 0)))
+    if (checkbox("16", 800, 420, (depth == 0)))
       depth = 0;
-    if (checkbox(800, 450, (depth == 1)))
+    if (checkbox("24", 800, 450, (depth == 1)))
       depth = 1;
-    if (checkbox(800, 480, (depth == 2)))
+    if (checkbox("32", 800, 480, (depth == 2)))
       depth = 2;
 
     alfont_textout_centre_aa(mb, pump, "Volume", 700, 510, 0);
-    alfont_textout_aa(mb, pump, "Mute", 830, 510, 0);
-    alfont_textout_aa(mb, pump, "Normal", 830, 540, 0);
-    alfont_textout_aa(mb, pump, "Loud", 830, 570, 0);
-    if (checkbox(800, 510, (vol == 0)))
+    if (checkbox("Mute", 800, 510, (vol == 0)))
       vol = 0;
-    if (checkbox(800, 540, (vol == 1)))
+    if (checkbox("Normal", 800, 540, (vol == 1)))
       vol = 1;
-    if (checkbox(800, 570, (vol == 2)))
+    if (checkbox("Loud", 800, 570, (vol == 2)))
       vol = 2;
 
     alfont_set_font_size(pump, 75);
