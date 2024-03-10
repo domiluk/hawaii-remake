@@ -18,6 +18,6 @@ How to compile the project on windows with the original workflow:
 - resolutions should include some 16:9
 - main music glitches out at the end and doesn't loop (even though it should)
 
-## What to work on today:
+## What to work on next:
 
-## What to work on tomorrow:
+- pochopit game_loop
