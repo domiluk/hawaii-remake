@@ -465,125 +465,73 @@ enum Scene options_menu_loop()
     alfont_set_font_size(pump, 32);
     alfont_textout_centre_aa(mb, pump, "IN GAME OPTIONS", 764, 20, 0xFFFFFF);
     alfont_textout_centre_aa(mb, pump, "SETTINGS", 764, 290, 0xFFFFFF);
+
     alfont_set_font_size(pump, 30);
     alfont_textout_centre_aa(mb, pump, "Number of laps", 700, 60, 0);
-    // if (checkbox(800, 60, (nlaps == 3)))
-    // nlaps = 3;
-    rect(mb, 800, 60, 820, 80, 0);
-    rect(mb, 840, 60, 860, 80, 0);
-    rect(mb, 880, 60, 900, 80, 0);
     alfont_textout_centre_aa(mb, pump, "3", 830, 60, 0);
     alfont_textout_centre_aa(mb, pump, "5", 870, 60, 0);
     alfont_textout_centre_aa(mb, pump, "7", 910, 60, 0);
+    if (checkbox(800, 60, (nlaps == 3)))
+      nlaps = 3;
+    if (checkbox(840, 60, (nlaps == 5)))
+      nlaps = 5;
+    if (checkbox(880, 60, (nlaps == 7)))
+      nlaps = 7;
+
     alfont_textout_centre_aa(mb, pump, "Color of Player's boat", 700, 90, 0);
-    alfont_textout_centre_aa(mb, pump, "Color of CPU's boat", 700, 190, 0);
-    rect(mb, 800, 90, 820, 110, 0);
-    rect(mb, 800, 190, 820, 210, 0);
-    rect(mb, 800, 120, 820, 140, 0);
-    rect(mb, 800, 220, 820, 240, 0);
-    rect(mb, 800, 150, 820, 170, 0);
-    rect(mb, 800, 250, 820, 270, 0);
     alfont_textout_aa(mb, pump, "Red", 830, 90, 0);
     alfont_textout_aa(mb, pump, "Green", 830, 120, 0);
     alfont_textout_aa(mb, pump, "Blue", 830, 150, 0);
+    if (checkbox(800, 90, (player1_boat_color == 0)))
+      player1_boat_color = 0;
+    if (checkbox(800, 120, (player1_boat_color == 1)))
+      player1_boat_color = 1;
+    if (checkbox(800, 150, (player1_boat_color == 2)))
+      player1_boat_color = 2;
+
+    alfont_textout_centre_aa(mb, pump, "Color of CPU's boat", 700, 190, 0);
     alfont_textout_aa(mb, pump, "Red", 830, 190, 0);
     alfont_textout_aa(mb, pump, "Green", 830, 220, 0);
     alfont_textout_aa(mb, pump, "Blue", 830, 250, 0);
+    if (checkbox(800, 190, (player2_boat_color == 0)))
+      player2_boat_color = 0;
+    if (checkbox(800, 220, (player2_boat_color == 1)))
+      player2_boat_color = 1;
+    if (checkbox(800, 250, (player2_boat_color == 2)))
+      player2_boat_color = 2;
+
     alfont_textout_centre_aa(mb, pump, "Resolution", 700, 330, 0);
-    alfont_textout_centre_aa(mb, pump, "Color Depth", 700, 420, 0);
-    alfont_textout_centre_aa(mb, pump, "Volume", 700, 510, 0);
-    rect(mb, 800, 330, 820, 350, 0);
-    rect(mb, 800, 360, 820, 380, 0);
-    rect(mb, 800, 390, 820, 410, 0);
     alfont_textout_aa(mb, pump, "800x600", 830, 330, 0);
     alfont_textout_aa(mb, pump, "1024x768", 830, 360, 0);
     alfont_textout_aa(mb, pump, "1280x1024", 830, 390, 0);
-    rect(mb, 800, 420, 820, 440, 0);
-    rect(mb, 800, 450, 820, 470, 0);
-    rect(mb, 800, 480, 820, 500, 0);
+    if (checkbox(800, 330, (res == 0)))
+      res = 0;
+    if (checkbox(800, 360, (res == 1)))
+      res = 1;
+    if (checkbox(800, 390, (res == 2)))
+      res = 2;
+
+    alfont_textout_centre_aa(mb, pump, "Color Depth", 700, 420, 0);
     alfont_textout_aa(mb, pump, "16", 830, 420, 0);
     alfont_textout_aa(mb, pump, "24", 830, 450, 0);
     alfont_textout_aa(mb, pump, "32", 830, 480, 0);
-    rect(mb, 800, 510, 820, 530, 0);
-    rect(mb, 800, 540, 820, 560, 0);
-    rect(mb, 800, 570, 820, 590, 0);
+    if (checkbox(800, 420, (depth == 0)))
+      depth = 0;
+    if (checkbox(800, 450, (depth == 1)))
+      depth = 1;
+    if (checkbox(800, 480, (depth == 2)))
+      depth = 2;
+
+    alfont_textout_centre_aa(mb, pump, "Volume", 700, 510, 0);
     alfont_textout_aa(mb, pump, "Mute", 830, 510, 0);
     alfont_textout_aa(mb, pump, "Normal", 830, 540, 0);
     alfont_textout_aa(mb, pump, "Loud", 830, 570, 0);
-
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 60 && mouse_y < 80 && mouse_b & 1)
-      nlaps = 3;
-    if (mouse_x > 840 && mouse_x < 860 && mouse_y > 60 && mouse_y < 80 && mouse_b & 1)
-      nlaps = 5;
-    if (mouse_x > 880 && mouse_x < 900 && mouse_y > 60 && mouse_y < 80 && mouse_b & 1)
-      nlaps = 7;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 90 && mouse_y < 110 && mouse_b & 1)
-      player1_boat_color = 0;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 120 && mouse_y < 140 && mouse_b & 1)
-      player1_boat_color = 1;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 150 && mouse_y < 170 && mouse_b & 1)
-      player1_boat_color = 2;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 190 && mouse_y < 210 && mouse_b & 1)
-      player2_boat_color = 0;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 220 && mouse_y < 240 && mouse_b & 1)
-      player2_boat_color = 1;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 250 && mouse_y < 270 && mouse_b & 1)
-      player2_boat_color = 2;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 330 && mouse_y < 350 && mouse_b & 1)
-      res = 0;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 360 && mouse_y < 380 && mouse_b & 1)
-      res = 1;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 390 && mouse_y < 410 && mouse_b & 1)
-      res = 2;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 420 && mouse_y < 440 && mouse_b & 1)
-      depth = 0;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 450 && mouse_y < 470 && mouse_b & 1)
-      depth = 1;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 480 && mouse_y < 490 && mouse_b & 1)
-      depth = 2;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 510 && mouse_y < 530 && mouse_b & 1)
+    if (checkbox(800, 510, (vol == 0)))
       vol = 0;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 540 && mouse_y < 560 && mouse_b & 1)
-      vol = 180;
-    if (mouse_x > 800 && mouse_x < 820 && mouse_y > 570 && mouse_y < 590 && mouse_b & 1)
-      vol = 255;
-
-    if (nlaps == 3)
-      alfont_textout_aa(mb, pump, "X", 800, 60, 0);
-    else if (nlaps == 5)
-      alfont_textout_aa(mb, pump, "X", 840, 60, 0);
-    else
-      alfont_textout_aa(mb, pump, "X", 880, 60, 0);
-    if (player1_boat_color == 0)
-      alfont_textout_aa(mb, pump, "X", 800, 90, 0);
-    else if (player1_boat_color == 1)
-      alfont_textout_aa(mb, pump, "X", 800, 120, 0);
-    else
-      alfont_textout_aa(mb, pump, "X", 800, 150, 0);
-    if (player2_boat_color == 0)
-      alfont_textout_aa(mb, pump, "X", 800, 190, 0);
-    else if (player2_boat_color == 1)
-      alfont_textout_aa(mb, pump, "X", 800, 220, 0);
-    else
-      alfont_textout_aa(mb, pump, "X", 800, 250, 0);
-    if (res == 0)
-      alfont_textout_aa(mb, pump, "X", 800, 330, 0);
-    else if (res == 1)
-      alfont_textout_aa(mb, pump, "X", 800, 360, 0);
-    else
-      alfont_textout_aa(mb, pump, "X", 800, 390, 0);
-    if (depth == 0)
-      alfont_textout_aa(mb, pump, "X", 800, 420, 0);
-    else if (depth == 1)
-      alfont_textout_aa(mb, pump, "X", 800, 450, 0);
-    else
-      alfont_textout_aa(mb, pump, "X", 800, 480, 0);
-    if (vol == 0)
-      alfont_textout_aa(mb, pump, "X", 800, 510, 0);
-    else if (vol == 180)
-      alfont_textout_aa(mb, pump, "X", 800, 540, 0);
-    else
-      alfont_textout_aa(mb, pump, "X", 800, 570, 0);
+    if (checkbox(800, 540, (vol == 1)))
+      vol = 1;
+    if (checkbox(800, 570, (vol == 2)))
+      vol = 2;
 
     alfont_set_font_size(pump, 75);
     alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
