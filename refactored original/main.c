@@ -14,7 +14,16 @@
 
 void rotate(BITMAP *bmp, BITMAP *tmp, float angle);
 
-int camup1 = 0, camup2 = 0, camleft2 = 0, camleft1 = 0;
+typedef struct
+{
+  int left;
+  int up;
+  int width;
+  int height;
+  BITMAP *mb;
+} CAMERA;
+
+CAMERA camera, camera1, camera2;
 BITMAP *ostrov, *vsetko;
 BITMAP *alpha;
 BITMAP *white_point_bmp, *rotated_white_point_bmp;
@@ -223,6 +232,24 @@ int main()
 
   mb = create_bitmap(SCREEN_W, SCREEN_H);
   vsetko = create_bitmap(2100, 1900);
+
+  camera.left = 0;
+  camera.up = 0;
+  camera.width = SCREEN_W;
+  camera.height = SCREEN_H;
+  camera.mb = create_bitmap(camera.width, camera.height);
+
+  camera1.left = 0;
+  camera1.up = 0;
+  camera1.width = 512;
+  camera1.height = 768;
+  camera1.mb = create_bitmap(camera1.width, camera1.height);
+
+  camera2.left = 0;
+  camera2.up = 0;
+  camera2.width = 512;
+  camera2.height = 768;
+  camera2.mb = create_bitmap(camera2.width, camera2.height);
 
   player1.x = 996 - 100;
   player1.y = 1025 - 100;
@@ -669,6 +696,21 @@ void game_deinit()
   remove_int(mooove_time);
 }
 
+void center_camera_on_a_boat(CAMERA *camera, const BOAT *player)
+{
+  camera->left = player->x - camera->width / 2;
+  camera->up = player->y - camera->height / 2;
+
+  if (camera->left < 0)
+    camera->left = 0;
+  if (camera->up < 0)
+    camera->up = 0;
+  if (camera->left > (ostrov->w - camera->width))
+    camera->left = ostrov->w - camera->width;
+  if (camera->up > (ostrov->h - camera->height))
+    camera->up = ostrov->h - camera->height;
+}
+
 enum Scene game_loop()
 {
   game_init();
@@ -695,60 +737,30 @@ enum Scene game_loop()
       blit(ostrov, vsetko, 0, 0, 0, 0, 2100, 1900);
 
       // lava polka obrazovky
-      camleft1 = player1.x - 256;
-      camup1 = player1.y - 384;
-
-      if (camleft1 < 0)
-        camleft1 = 0;
-      if (camup1 < 0)
-        camup1 = 0;
-      if (camup1 > (ostrov->h - 768))
-        camup1 = ostrov->h - 768;
-      if (camleft1 > (ostrov->w - 1024 + 512))
-        camleft1 = ostrov->w - 1024 + 512;
+      center_camera_on_a_boat(&camera1, &player1);
 
       rotate(player1.bmp, player1.bmp_rot, player1.rot + 90);
       draw_sprite(vsetko, player1.bmp_rot, player1.x, player1.y);
 
       // prava polka obrazovky
-      camleft2 = player2.x - 256;
-      camup2 = player2.y - 384;
-
-      if (camleft2 < 0)
-        camleft2 = 0;
-      if (camup2 < 0)
-        camup2 = 0;
-      if (camup2 > (ostrov->h - 768))
-        camup2 = ostrov->h - 768;
-      if (camleft2 > (ostrov->w - 1024 + 512))
-        camleft2 = ostrov->w - 1024 + 512;
+      center_camera_on_a_boat(&camera2, &player2);
 
       rotate(player2.bmp, player2.bmp_rot, player2.rot + 90);
       draw_sprite(vsetko, player2.bmp_rot, player2.x, player2.y);
 
       // vykresli lavu a pravu polku z bitmapy vsetko
-      blit(vsetko, mb, camleft1, camup1, 0, 0, 512, 768);
-      blit(vsetko, mb, camleft2, camup2, 512, 0, 512, 768);
+      blit(vsetko, mb, camera1.left, camera1.up, 0, 0, 512, 768);
+      blit(vsetko, mb, camera2.left, camera2.up, 512, 0, 512, 768);
       vline(mb, 512, 0, 768, makecol(rand() % 255, 0, 0));
     }
 
     if (game_mode == MODE_PRACTICE || game_mode == MODE_CAREER)
     {
-      camleft1 = player1.x - 512;
-      camup1 = player1.y - 384;
+      center_camera_on_a_boat(&camera, &player1);
 
-      if (camleft1 < 0)
-        camleft1 = 0;
-      if (camup1 < 0)
-        camup1 = 0;
-      if (camup1 > (ostrov->h - 768))
-        camup1 = ostrov->h - 768;
-      if (camleft1 > (ostrov->w - 1024))
-        camleft1 = ostrov->w - 1024;
-
-      blit(ostrov, mb, camleft1, camup1, 0, 0, camleft1 + 1024, camup1 + 768);
+      blit(ostrov, mb, camera.left, camera.up, 0, 0, camera.left + 1024, camera.up + 768);
       rotate(player1.bmp, player1.bmp_rot, player1.rot + 90);
-      draw_sprite(mb, player1.bmp_rot, player1.x - camleft1, player1.y - camup1);
+      draw_sprite(mb, player1.bmp_rot, player1.x - camera.left, player1.y - camera.up);
     }
 
     if (game_mode == MODE_CAREER)
@@ -766,7 +778,7 @@ enum Scene game_loop()
           player2.v += player2.slowdown;
       }
       rotate(player2.bmp, player2.bmp_rot, player2.rot);
-      draw_sprite(mb, player2.bmp_rot, player2.x - camleft1, player2.y - camup1);
+      draw_sprite(mb, player2.bmp_rot, player2.x - camera.left, player2.y - camera.up);
     }
 
     int boats_distance_less_than_90 = ((player1.x - player2.x) * (player1.x - player2.x)) + ((player1.y - player2.y) * (player1.y - player2.y)) <= 90 * 90;
