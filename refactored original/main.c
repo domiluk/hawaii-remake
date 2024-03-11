@@ -10,6 +10,8 @@
 #define DEG_TO_RADS 0.01745329252 // just multiply your degrees by this constant
 #define RADS_TO_DEG 57.2957795147 // just multiply your radians by this constant
 
+#define ROTATE_AMOUNT 1.5
+
 void rotate(BITMAP *bmp, BITMAP *tmp, float angle);
 
 int camup1 = 0, camup2 = 0, camleft2 = 0, camleft1 = 0;
@@ -48,10 +50,9 @@ typedef struct boat
   float y;
   float v;
   float rot;
-  float rotate;
-  float maxspeed;
-  float speedup;
-  float slowdown;
+  float maxspeed; // TODO: should not be in boat
+  float speedup;  // TODO: should not be in boat
+  float slowdown; // TODO: should not be in boat
   int laps;
   int checkpoint_one;
   int checkpoint_two;
@@ -232,7 +233,6 @@ int main()
   player1.maxspeed = 10;
   player1.speedup = 0.05;
   player1.slowdown = 0.08;
-  player1.rotate = 1.5;
 
   player2.x = 1105 - 100;
   player2.y = 1087 - 100;
@@ -249,7 +249,6 @@ int main()
   player2.maxspeed = 10;
   player2.speedup = 0.05;
   player2.slowdown = 0.08;
-  player2.rotate = 1.5;
 
   white_point_bmp = create_bitmap(100, 100);
   clear_bitmap(white_point_bmp);
@@ -634,9 +633,7 @@ enum Scene game_loop()
     if (key[KEY_UP])
     {
       if (player1.v < player1.maxspeed)
-      {
         player1.v += player1.speedup;
-      }
     }
     else
     {
@@ -645,9 +642,9 @@ enum Scene game_loop()
       slow_down(&player1);
     }
     if (key[KEY_LEFT])
-      player1.rot -= player1.rotate;
+      player1.rot -= ROTATE_AMOUNT;
     if (key[KEY_RIGHT])
-      player1.rot += player1.rotate;
+      player1.rot += ROTATE_AMOUNT;
     // -----------------------------
 
     if (game_mode == MODE_MULTIPLAYER)
@@ -665,12 +662,12 @@ enum Scene game_loop()
 
         if (key[KEY_A])
         {
-          player2.rot -= player2.rotate;
+          player2.rot -= ROTATE_AMOUNT;
         }
 
         if (key[KEY_D])
         {
-          player2.rot += player2.rotate;
+          player2.rot += ROTATE_AMOUNT;
         }
       }
       else
@@ -693,12 +690,12 @@ enum Scene game_loop()
 
         if (key[KEY_A])
         {
-          player2.rot -= player2.rotate;
+          player2.rot -= ROTATE_AMOUNT;
         }
 
         if (key[KEY_D])
         {
-          player2.rot += player2.rotate;
+          player2.rot += ROTATE_AMOUNT;
         }
       }
     } // if mode = MODE_MULTIPLAYER
@@ -781,7 +778,6 @@ enum Scene game_loop()
       rotate(player2.bmp, player2.bmp_rot, player2.rot);
       draw_sprite(mb, player2.bmp_rot, player2.x - camleft1, player2.y - camup1);
     }
-    // rest(40);
 
     int boats_distance_less_than_90 = ((player1.x - player2.x) * (player1.x - player2.x)) + ((player1.y - player2.y) * (player1.y - player2.y)) <= 90 * 90;
     if (boats_distance_less_than_90)
