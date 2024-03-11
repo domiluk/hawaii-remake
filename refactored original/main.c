@@ -670,6 +670,8 @@ enum Scene game_loop()
 
     if (game_mode == MODE_MULTIPLAYER)
     {
+      blit(ostrov, vsetko, 0, 0, 0, 0, 2100, 1900);
+
       // lava polka obrazovky
       camleft1 = player1.x - 256;
       camup1 = player1.y - 384;
@@ -682,8 +684,7 @@ enum Scene game_loop()
         camup1 = ostrov->h - 768;
       if (camleft1 > (ostrov->w - 1024 + 512))
         camleft1 = ostrov->w - 1024 + 512;
-      // 1536       1024
-      blit(ostrov, vsetko, 0, 0, 0, 0, 2100, 1900);
+
       rotate(player1.bmp, player1.bmp_rot, player1.rot + 90);
       draw_sprite(vsetko, player1.bmp_rot, player1.x, player1.y);
 
@@ -708,10 +709,12 @@ enum Scene game_loop()
       blit(vsetko, mb, camleft2, camup2, 512, 0, 512, 768);
       vline(mb, 512, 0, 768, makecol(rand() % 255, 0, 0));
     }
+
     if (game_mode == MODE_PRACTICE || game_mode == MODE_CAREER)
     {
       camleft1 = player1.x - 512;
       camup1 = player1.y - 384;
+
       if (camleft1 < 0)
         camleft1 = 0;
       if (camup1 < 0)
@@ -720,13 +723,10 @@ enum Scene game_loop()
         camup1 = ostrov->h - 768;
       if (camleft1 > (ostrov->w - 1024))
         camleft1 = ostrov->w - 1024;
+
       blit(ostrov, mb, camleft1, camup1, 0, 0, camleft1 + 1024, camup1 + 768);
       rotate(player1.bmp, player1.bmp_rot, player1.rot + 90);
       draw_sprite(mb, player1.bmp_rot, player1.x - camleft1, player1.y - camup1);
-      // /* REFACTOR: ATTEMPT TO UNDERSTAND white_point_bmp and rotated_white_point_bmp */
-      // blit(white_point_bmp, mb, 0, 0, 300, 300, 100, 100);
-      // blit(rotated_white_point_bmp, mb, 0, 0, 500, 300, 100, 100);
-      // /* /END */
     }
 
     if (game_mode == MODE_CAREER)
@@ -819,7 +819,6 @@ enum Scene game_loop()
         alfont_set_font_size(pump, 80);
         alfont_textprintf_centre_aa(mb, pump, 512, 434, 0xFFFFFF, "Player no.1");
         blit(mb, screen, 0, 0, 0, 0, 1024, 768);
-        //       rest(3000);
         if (key[KEY_ESC])
           return MAIN_MENU;
       }
@@ -831,7 +830,6 @@ enum Scene game_loop()
         alfont_set_font_size(pump, 80);
         alfont_textprintf_centre_aa(mb, pump, 512, 434, 0xFFFFFF, "Player no.2");
         blit(mb, screen, 0, 0, 0, 0, 1024, 768);
-        // rest(3000);
         if (key[KEY_ESC])
           return MAIN_MENU;
       }
@@ -842,7 +840,7 @@ enum Scene game_loop()
       {
         clear_to_color(screen, 0);
         alfont_set_font_size(pump, 70);
-        alfont_textprintf_centre_aa(screen, pump, 512, 384, 0xFFFFFF, "your total time in %d lasp is %d:%d", winning_laps, global_min, global_sec);
+        alfont_textprintf_centre_aa(screen, pump, 512, 384, 0xFFFFFF, "your total time in %d laps is %d:%d", winning_laps, global_min, global_sec);
         rest(2500);
         return MAIN_MENU;
       }
