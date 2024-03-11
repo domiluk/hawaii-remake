@@ -632,52 +632,40 @@ void slow_down(BOAT *player)
     player->v += player->slowdown;
 }
 
+void movement(BOAT *player)
+{
+  player->x += cos(player->rot * DEG_TO_RADS) * player->v;
+  player->y += sin(player->rot * DEG_TO_RADS) * player->v;
+
+  if (key[player->key_forwards])
+  {
+    if (player->v < player->maxspeed)
+      player->v += player->speedup;
+  }
+  else
+  {
+    if (key[player->key_backwards])
+      slow_down(player);
+    slow_down(player);
+  }
+  if (key[player->key_turn_left])
+    player->rot -= ROTATE_AMOUNT;
+  if (key[player->key_turn_right])
+    player->rot += ROTATE_AMOUNT;
+}
+
 enum Scene game_loop()
 {
   install_int(mooove_time, 1000); // TODO: move into some game init function
   while (!key[KEY_ESC])
   {
     check_boat_collisions(&player1);
-    player1.x += cos(player1.rot * DEG_TO_RADS) * player1.v;
-    player1.y += sin(player1.rot * DEG_TO_RADS) * player1.v;
-
-    if (key[player1.key_forwards])
-    {
-      if (player1.v < player1.maxspeed)
-        player1.v += player1.speedup;
-    }
-    else
-    {
-      if (key[player1.key_backwards])
-        slow_down(&player1);
-      slow_down(&player1);
-    }
-    if (key[player1.key_turn_left])
-      player1.rot -= ROTATE_AMOUNT;
-    if (key[player1.key_turn_right])
-      player1.rot += ROTATE_AMOUNT;
+    movement(&player1);
 
     if (game_mode == MODE_MULTIPLAYER)
     {
       check_boat_collisions(&player2);
-      player2.x += cos(player2.rot * DEG_TO_RADS) * player2.v;
-      player2.y += sin(player2.rot * DEG_TO_RADS) * player2.v;
-
-      if (key[player2.key_forwards])
-      {
-        if (player2.v < player2.maxspeed)
-          player2.v += player2.speedup;
-      }
-      else
-      {
-        if (key[player2.key_backwards])
-          slow_down(&player2);
-        slow_down(&player2);
-      }
-      if (key[player2.key_turn_left])
-        player2.rot -= ROTATE_AMOUNT;
-      if (key[player2.key_turn_right])
-        player2.rot += ROTATE_AMOUNT;
+      movement(&player2);
     }
 
     if (game_mode == MODE_MULTIPLAYER)
