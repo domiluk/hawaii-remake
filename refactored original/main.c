@@ -659,11 +659,28 @@ void movement(BOAT *player)
     player->rot += ROTATE_AMOUNT;
 }
 
+void game_init()
+{
+  install_int(mooove_time, 1000);
+}
+
+void game_deinit()
+{
+  remove_int(mooove_time);
+}
+
 enum Scene game_loop()
 {
-  install_int(mooove_time, 1000); // TODO: move into some game init function
+  game_init();
   while (!key[KEY_ESC])
   {
+    int somebody_won = player1.laps == winning_laps || player2.laps == winning_laps;
+    if (somebody_won)
+    {
+      game_deinit();
+      return GAME_OVER;
+    }
+
     check_boat_collisions(&player1);
     movement(&player1);
 
@@ -812,12 +829,6 @@ enum Scene game_loop()
       alfont_textprintf_aa(mb, pump, 810, 10, 0, "Laps %d", player2.laps);
       alfont_textprintf_aa(mb, pump, 810, 40, 0, "Last lap time %d:%d", player2.last_lap_min, player2.last_lap_sec);
       alfont_textprintf_aa(mb, pump, 810, 70, 0, "Best lap time %d:%d", player2.best_lap_min, player2.best_lap_sec);
-    }
-
-    if (player1.laps == winning_laps || player2.laps == winning_laps)
-    {
-      remove_int(mooove_time);
-      return GAME_OVER;
     }
 
     blit(mb, screen, 0, 0, 0, 0, 1024, 768);
