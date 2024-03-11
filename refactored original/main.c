@@ -35,6 +35,7 @@ enum Scene
   OPTIONS_MENU,
   CREDITS_MENU,
   GAME,
+  GAME_OVER,
   EXIT
 };
 
@@ -43,6 +44,7 @@ enum Scene play_menu_loop();
 enum Scene options_menu_loop();
 enum Scene credits_menu_loop();
 enum Scene game_loop();
+enum Scene game_over_loop();
 
 typedef struct boat
 {
@@ -305,6 +307,9 @@ int main()
       break;
     case GAME:
       next_scene = game_loop();
+      break;
+    case GAME_OVER:
+      next_scene = game_over_loop();
       break;
     case EXIT:
       printf("smrt blenderu");
@@ -809,6 +814,21 @@ enum Scene game_loop()
       alfont_textprintf_aa(mb, pump, 810, 70, 0, "Best lap time %d:%d", player2.best_lap_min, player2.best_lap_sec);
     }
 
+    if (player1.laps == winning_laps || player2.laps == winning_laps)
+    {
+      remove_int(mooove_time);
+      return GAME_OVER;
+    }
+
+    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
+  }
+  return EXIT;
+}
+
+enum Scene game_over_loop()
+{
+  while (!key[KEY_ESC])
+  {
     if (game_mode != MODE_PRACTICE)
     {
       if (player1.laps == winning_laps || player2.laps == winning_laps)
@@ -818,8 +838,6 @@ enum Scene game_loop()
         alfont_textprintf_centre_aa(mb, pump, 512, 384, 0xFFFFFF, "The winner is...!");
         alfont_set_font_size(pump, 80);
         alfont_textprintf_centre_aa(mb, pump, 512, 434, 0xFFFFFF, "Player no.%d", player1.laps == winning_laps ? 1 : 2);
-        if (key[KEY_ESC])
-          return MAIN_MENU;
       }
     }
     else
@@ -828,13 +846,11 @@ enum Scene game_loop()
       {
         clear_to_color(mb, 0);
         alfont_set_font_size(pump, 70);
-        alfont_textprintf_centre_aa(mb, pump, 512, 384, 0xFFFFFF, "your total time in %d laps is %d:%d", winning_laps, global_min, global_sec);
-        if (key[KEY_ESC])
-          return MAIN_MENU;
+        alfont_textprintf_centre_aa(mb, pump, 512, 384, 0xFFFFFF, "Your total time in %d laps is %d:%d", winning_laps, global_min, global_sec);
       }
     }
 
     blit(mb, screen, 0, 0, 0, 0, 1024, 768);
   }
-  return EXIT;
+  return MAIN_MENU;
 }
