@@ -616,69 +616,48 @@ void check_boat_collisions(BOAT *player)
   }
 }
 
+void slow_down(BOAT *player)
+{
+  // TODO: ????????
+  if (player->xv > player->slowdown)
+    player->xv -= player->slowdown;
+  if (player->yv > player->slowdown)
+    player->yv -= player->slowdown;
+  if (player->xv < -player->slowdown)
+    player->xv += player->slowdown;
+  if (player->yv < -player->slowdown)
+    player->yv += player->slowdown;
+}
+
 enum Scene game_loop()
 {
-  install_int(mooove_time, 1000);
+  install_int(mooove_time, 1000); // TODO: move into some game init function
   while (!key[KEY_ESC])
   {
     check_boat_collisions(&player1);
 
-    if (key[KEY_UP]) // && getr(getpixel(alpha,boat.x + boat_front_x, boat.y + boat_front_y)) == 255)
+    // --------------------------------------
+    player1.x += cos(player1.rot * DEG_TO_RADS) * player1.xv;
+    player1.y += sin(player1.rot * DEG_TO_RADS) * player1.yv;
+    if (key[KEY_UP])
     {
-      player1.x += cos(player1.rot * DEG_TO_RADS) * player1.xv;
-      player1.y += sin(player1.rot * DEG_TO_RADS) * player1.yv;
       if (player1.xv < player1.maxspeed && player1.yv < player1.maxspeed)
-      {
+      { // FIXME: both xv and yv are ALWAYS the same and should be just velocity (one variable)
         player1.xv += player1.speedup;
         player1.yv += player1.speedup;
-      }
-
-      if (key[KEY_LEFT])
-      {
-        player1.rot -= player1.rotate;
-      }
-
-      if (key[KEY_RIGHT])
-      {
-        player1.rot += player1.rotate;
       }
     }
     else
     {
-      player1.x += cos(player1.rot * DEG_TO_RADS) * player1.xv;
-      player1.y += sin(player1.rot * DEG_TO_RADS) * player1.yv;
-
       if (key[KEY_DOWN])
-      {
-        if (player1.xv > player1.slowdown)
-          player1.xv -= player1.slowdown;
-        if (player1.yv > player1.slowdown)
-          player1.yv -= player1.slowdown;
-        if (player1.xv < -player1.slowdown)
-          player1.xv += player1.slowdown;
-        if (player1.yv < -player1.slowdown)
-          player1.yv += player1.slowdown;
-      }
-
-      if (player1.xv > player1.slowdown)
-        player1.xv -= player1.slowdown;
-      if (player1.yv > player1.slowdown)
-        player1.yv -= player1.slowdown;
-      if (player1.xv < -player1.slowdown)
-        player1.xv += player1.slowdown;
-      if (player1.yv < -player1.slowdown)
-        player1.yv += player1.slowdown;
-
-      if (key[KEY_LEFT])
-      {
-        player1.rot -= player1.rotate;
-      }
-
-      if (key[KEY_RIGHT])
-      {
-        player1.rot += player1.rotate;
-      }
+        slow_down(&player1);
+      slow_down(&player1);
     }
+    if (key[KEY_LEFT])
+      player1.rot -= player1.rotate;
+    if (key[KEY_RIGHT])
+      player1.rot += player1.rotate;
+    // -----------------------------
 
     if (game_mode == MODE_MULTIPLAYER)
     {
@@ -884,6 +863,7 @@ enum Scene game_loop()
     alfont_textprintf_aa(mb, pump, 20, 10, 0, "Laps %d", player1.laps);
     alfont_textprintf_aa(mb, pump, 20, 40, 0, "Last lap time %d:%d", player1.last_lap_min, player1.last_lap_sec);
     alfont_textprintf_aa(mb, pump, 20, 70, 0, "Best lap time %d:%d", player1.best_lap_min, player1.best_lap_sec);
+
     if (game_mode == MODE_MULTIPLAYER)
     {
       alfont_textprintf_aa(mb, pump, 810, 10, 0, "Laps %d", player2.laps);

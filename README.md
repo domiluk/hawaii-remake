@@ -22,3 +22,6 @@ How to compile the project on windows with the original workflow:
 ## What to work on next:
 
 - find out how game_loop works
+- make some sort of game init function so that everything gets reinited and the game can be played again
+  - but first just the install int
+- player xv and yv are always the same, the abstraction is wrong - should just be one variable for velocity
