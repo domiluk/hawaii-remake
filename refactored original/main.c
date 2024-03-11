@@ -811,23 +811,13 @@ enum Scene game_loop()
 
     if (game_mode != MODE_PRACTICE)
     {
-      if (player1.laps == winning_laps)
+      if (player1.laps == winning_laps || player2.laps == winning_laps)
       {
         clear_to_color(mb, 0);
         alfont_set_font_size(pump, 75);
         alfont_textprintf_centre_aa(mb, pump, 512, 384, 0xFFFFFF, "The winner is...!");
         alfont_set_font_size(pump, 80);
-        alfont_textprintf_centre_aa(mb, pump, 512, 434, 0xFFFFFF, "Player no.1");
-        if (key[KEY_ESC])
-          return MAIN_MENU;
-      }
-      if (player2.laps == winning_laps)
-      {
-        clear_to_color(mb, 0);
-        alfont_set_font_size(pump, 75);
-        alfont_textprintf_centre_aa(mb, pump, 512, 384, 0xFFFFFF, "The winner is...!");
-        alfont_set_font_size(pump, 80);
-        alfont_textprintf_centre_aa(mb, pump, 512, 434, 0xFFFFFF, "Player no.2");
+        alfont_textprintf_centre_aa(mb, pump, 512, 434, 0xFFFFFF, "Player no.%d", player1.laps == winning_laps ? 1 : 2);
         if (key[KEY_ESC])
           return MAIN_MENU;
       }
@@ -836,11 +826,11 @@ enum Scene game_loop()
     {
       if (player1.laps == winning_laps)
       {
-        clear_to_color(screen, 0);
+        clear_to_color(mb, 0);
         alfont_set_font_size(pump, 70);
-        alfont_textprintf_centre_aa(screen, pump, 512, 384, 0xFFFFFF, "your total time in %d laps is %d:%d", winning_laps, global_min, global_sec);
-        rest(2500);
-        return MAIN_MENU;
+        alfont_textprintf_centre_aa(mb, pump, 512, 384, 0xFFFFFF, "your total time in %d laps is %d:%d", winning_laps, global_min, global_sec);
+        if (key[KEY_ESC])
+          return MAIN_MENU;
       }
     }
 

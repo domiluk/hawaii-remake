@@ -24,3 +24,4 @@ How to compile the project on windows with the original workflow:
 - find out how game_loop works
 - make some sort of game init function so that everything gets reinited and the game can be played again
   - but first just the install int
+- game continues in the background even after somebody won and the winning screen is up
