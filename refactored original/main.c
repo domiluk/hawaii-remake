@@ -62,6 +62,10 @@ typedef struct boat
   int last_lap_min;
   int best_lap_min;
   int AI;
+  int key_forwards;
+  int key_backwards;
+  int key_turn_left;
+  int key_turn_right;
   BITMAP *bmp;
   BITMAP *bmp_rot;
 } BOAT;
@@ -233,6 +237,10 @@ int main()
   player1.maxspeed = 10;
   player1.speedup = 0.05;
   player1.slowdown = 0.08;
+  player1.key_forwards = KEY_UP;
+  player1.key_backwards = KEY_DOWN;
+  player1.key_turn_left = KEY_LEFT;
+  player1.key_turn_right = KEY_RIGHT;
 
   player2.x = 1105 - 100;
   player2.y = 1087 - 100;
@@ -249,6 +257,10 @@ int main()
   player2.maxspeed = 10;
   player2.speedup = 0.05;
   player2.slowdown = 0.08;
+  player2.key_forwards = KEY_W;
+  player2.key_backwards = KEY_S;
+  player2.key_turn_left = KEY_A;
+  player2.key_turn_right = KEY_D;
 
   white_point_bmp = create_bitmap(100, 100);
   clear_bitmap(white_point_bmp);
@@ -613,7 +625,7 @@ void check_boat_collisions(BOAT *player)
 
 void slow_down(BOAT *player)
 {
-  // TODO: ????????
+  // TODO: ???????? probably: add something like else: player.v = 0
   if (player->v > player->slowdown)
     player->v -= player->slowdown;
   if (player->v < -player->slowdown)
@@ -626,79 +638,47 @@ enum Scene game_loop()
   while (!key[KEY_ESC])
   {
     check_boat_collisions(&player1);
-
-    // --------------------------------------
     player1.x += cos(player1.rot * DEG_TO_RADS) * player1.v;
     player1.y += sin(player1.rot * DEG_TO_RADS) * player1.v;
-    if (key[KEY_UP])
+
+    if (key[player1.key_forwards])
     {
       if (player1.v < player1.maxspeed)
         player1.v += player1.speedup;
     }
     else
     {
-      if (key[KEY_DOWN])
+      if (key[player1.key_backwards])
         slow_down(&player1);
       slow_down(&player1);
     }
-    if (key[KEY_LEFT])
+    if (key[player1.key_turn_left])
       player1.rot -= ROTATE_AMOUNT;
-    if (key[KEY_RIGHT])
+    if (key[player1.key_turn_right])
       player1.rot += ROTATE_AMOUNT;
-    // -----------------------------
 
     if (game_mode == MODE_MULTIPLAYER)
     {
       check_boat_collisions(&player2);
+      player2.x += cos(player2.rot * DEG_TO_RADS) * player2.v;
+      player2.y += sin(player2.rot * DEG_TO_RADS) * player2.v;
 
-      if (key[KEY_W]) // && getr(getpixel(alpha,boat.x + boat_front_x, boat.y + boat_front_y)) == 255)
+      if (key[player2.key_forwards])
       {
-        player2.x += cos(player2.rot * DEG_TO_RADS) * player2.v;
-        player2.y += sin(player2.rot * DEG_TO_RADS) * player2.v;
         if (player2.v < player2.maxspeed)
-        {
           player2.v += player2.speedup;
-        }
-
-        if (key[KEY_A])
-        {
-          player2.rot -= ROTATE_AMOUNT;
-        }
-
-        if (key[KEY_D])
-        {
-          player2.rot += ROTATE_AMOUNT;
-        }
       }
       else
       {
-        player2.x += cos(player2.rot * DEG_TO_RADS) * player2.v;
-        player2.y += sin(player2.rot * DEG_TO_RADS) * player2.v;
-
-        if (key[KEY_S])
-        {
-          if (player2.v > player2.slowdown)
-            player2.v -= player2.slowdown;
-          if (player2.v < -player2.slowdown)
-            player2.v += player2.slowdown;
-        }
-
-        if (player2.v > player2.slowdown)
-          player2.v -= player2.slowdown;
-        if (player2.v < -player2.slowdown)
-          player2.v += player2.slowdown;
-
-        if (key[KEY_A])
-        {
-          player2.rot -= ROTATE_AMOUNT;
-        }
-
-        if (key[KEY_D])
-        {
-          player2.rot += ROTATE_AMOUNT;
-        }
+        if (key[player2.key_backwards])
+          slow_down(&player2);
+        slow_down(&player2);
       }
-    } // if mode = MODE_MULTIPLAYER
+      if (key[player2.key_turn_left])
+        player2.rot -= ROTATE_AMOUNT;
+      if (key[player2.key_turn_right])
+        player2.rot += ROTATE_AMOUNT;
+    }
 
     if (game_mode == MODE_MULTIPLAYER)
     {
