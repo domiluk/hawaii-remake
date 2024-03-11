@@ -818,7 +818,6 @@ enum Scene game_loop()
         alfont_textprintf_centre_aa(mb, pump, 512, 384, 0xFFFFFF, "The winner is...!");
         alfont_set_font_size(pump, 80);
         alfont_textprintf_centre_aa(mb, pump, 512, 434, 0xFFFFFF, "Player no.1");
-        blit(mb, screen, 0, 0, 0, 0, 1024, 768);
         if (key[KEY_ESC])
           return MAIN_MENU;
       }
@@ -829,7 +828,6 @@ enum Scene game_loop()
         alfont_textprintf_centre_aa(mb, pump, 512, 384, 0xFFFFFF, "The winner is...!");
         alfont_set_font_size(pump, 80);
         alfont_textprintf_centre_aa(mb, pump, 512, 434, 0xFFFFFF, "Player no.2");
-        blit(mb, screen, 0, 0, 0, 0, 1024, 768);
         if (key[KEY_ESC])
           return MAIN_MENU;
       }
