@@ -46,8 +46,7 @@ typedef struct boat
 {
   float x;
   float y;
-  float xv;
-  float yv;
+  float v;
   float rot;
   float rotate;
   float maxspeed;
@@ -224,8 +223,7 @@ int main()
   player1.checkpoint_one = 0;
   player1.checkpoint_two = 0;
   player1.checkpoint_three = 0;
-  player1.xv = 0;
-  player1.yv = 0;
+  player1.v = 0;
   player1.rot = -50;
   player1.last_lap_sec = 0;
   player1.last_lap_min = 0;
@@ -242,8 +240,7 @@ int main()
   player2.checkpoint_one = 0;
   player2.checkpoint_two = 0;
   player2.checkpoint_three = 0;
-  player2.xv = 0;
-  player2.yv = 0;
+  player2.v = 0;
   player2.rot = -75;
   player2.last_lap_sec = 0;
   player2.last_lap_min = 0;
@@ -577,8 +574,7 @@ void check_boat_collisions(BOAT *player)
   int player_hit_the_land = boat_front_point_color_in_alpha == 0;
   if (player_hit_the_land)
   {
-    player->xv *= -0.75;
-    player->yv *= -0.75;
+    player->v *= -0.75;
   }
 
   int player_hit_checkpoint_one = boat_front_point_color_in_alpha == 64;
@@ -619,14 +615,10 @@ void check_boat_collisions(BOAT *player)
 void slow_down(BOAT *player)
 {
   // TODO: ????????
-  if (player->xv > player->slowdown)
-    player->xv -= player->slowdown;
-  if (player->yv > player->slowdown)
-    player->yv -= player->slowdown;
-  if (player->xv < -player->slowdown)
-    player->xv += player->slowdown;
-  if (player->yv < -player->slowdown)
-    player->yv += player->slowdown;
+  if (player->v > player->slowdown)
+    player->v -= player->slowdown;
+  if (player->v < -player->slowdown)
+    player->v += player->slowdown;
 }
 
 enum Scene game_loop()
@@ -637,14 +629,13 @@ enum Scene game_loop()
     check_boat_collisions(&player1);
 
     // --------------------------------------
-    player1.x += cos(player1.rot * DEG_TO_RADS) * player1.xv;
-    player1.y += sin(player1.rot * DEG_TO_RADS) * player1.yv;
+    player1.x += cos(player1.rot * DEG_TO_RADS) * player1.v;
+    player1.y += sin(player1.rot * DEG_TO_RADS) * player1.v;
     if (key[KEY_UP])
     {
-      if (player1.xv < player1.maxspeed && player1.yv < player1.maxspeed)
-      { // FIXME: both xv and yv are ALWAYS the same and should be just velocity (one variable)
-        player1.xv += player1.speedup;
-        player1.yv += player1.speedup;
+      if (player1.v < player1.maxspeed)
+      {
+        player1.v += player1.speedup;
       }
     }
     else
@@ -665,12 +656,11 @@ enum Scene game_loop()
 
       if (key[KEY_W]) // && getr(getpixel(alpha,boat.x + boat_front_x, boat.y + boat_front_y)) == 255)
       {
-        player2.x += cos(player2.rot * DEG_TO_RADS) * player2.xv;
-        player2.y += sin(player2.rot * DEG_TO_RADS) * player2.yv;
-        if (player2.xv < player2.maxspeed && player2.yv < player2.maxspeed)
+        player2.x += cos(player2.rot * DEG_TO_RADS) * player2.v;
+        player2.y += sin(player2.rot * DEG_TO_RADS) * player2.v;
+        if (player2.v < player2.maxspeed)
         {
-          player2.xv += player2.speedup;
-          player2.yv += player2.speedup;
+          player2.v += player2.speedup;
         }
 
         if (key[KEY_A])
@@ -685,29 +675,21 @@ enum Scene game_loop()
       }
       else
       {
-        player2.x += cos(player2.rot * DEG_TO_RADS) * player2.xv;
-        player2.y += sin(player2.rot * DEG_TO_RADS) * player2.yv;
+        player2.x += cos(player2.rot * DEG_TO_RADS) * player2.v;
+        player2.y += sin(player2.rot * DEG_TO_RADS) * player2.v;
 
         if (key[KEY_S])
         {
-          if (player2.xv > player2.slowdown)
-            player2.xv -= player2.slowdown;
-          if (player2.yv > player2.slowdown)
-            player2.yv -= player2.slowdown;
-          if (player2.xv < -player2.slowdown)
-            player2.xv += player2.slowdown;
-          if (player2.yv < -player2.slowdown)
-            player2.yv += player2.slowdown;
+          if (player2.v > player2.slowdown)
+            player2.v -= player2.slowdown;
+          if (player2.v < -player2.slowdown)
+            player2.v += player2.slowdown;
         }
 
-        if (player2.xv > player2.slowdown)
-          player2.xv -= player2.slowdown;
-        if (player2.yv > player2.slowdown)
-          player2.yv -= player2.slowdown;
-        if (player2.xv < -player2.slowdown)
-          player2.xv += player2.slowdown;
-        if (player2.yv < -player2.slowdown)
-          player2.yv += player2.slowdown;
+        if (player2.v > player2.slowdown)
+          player2.v -= player2.slowdown;
+        if (player2.v < -player2.slowdown)
+          player2.v += player2.slowdown;
 
         if (key[KEY_A])
         {
@@ -787,18 +769,14 @@ enum Scene game_loop()
       player2.x = getAI_x(AI_pos);
       player2.y = getAI_y(AI_pos);
       player2.rot = getAI_rot(AI_pos);
-      if (player2.xv > 0.2 || player2.yv > 0.2)
+      if (player2.v > 0.2)
       {
-        player2.x += player2.xv;
-        player2.y += player2.yv;
-        if (player2.xv > player2.slowdown)
-          player2.xv -= player2.slowdown;
-        if (player2.yv > player2.slowdown)
-          player2.yv -= player2.slowdown;
-        if (player2.xv < -player2.slowdown)
-          player2.xv += player2.slowdown;
-        if (player2.yv < -player2.slowdown)
-          player2.yv += player2.slowdown;
+        player2.x += player2.v;
+        player2.y += player2.v;
+        if (player2.v > player2.slowdown)
+          player2.v -= player2.slowdown;
+        if (player2.v < -player2.slowdown)
+          player2.v += player2.slowdown;
       }
       rotate(player2.bmp, player2.bmp_rot, player2.rot);
       draw_sprite(mb, player2.bmp_rot, player2.x - camleft1, player2.y - camup1);
@@ -819,22 +797,18 @@ enum Scene game_loop()
         player1.rot = player2.rot;
         player2.rot = temp;
 
-        temp = player1.xv;
-        player1.xv = player2.xv;
-        player2.xv = temp;
-
-        temp = player1.yv;
-        player1.yv = player2.yv;
-        player2.yv = temp;
+        temp = player1.v;
+        player1.v = player2.v;
+        player2.v = temp;
       }
       if (game_mode == MODE_CAREER)
       {
-        player1.xv = cos(getAI_rot(AI_pos) * DEG_TO_RADS) * 5;
-        player1.yv = sin(getAI_rot(AI_pos) * DEG_TO_RADS) * 5;
+        player1.v = cos(getAI_rot(AI_pos) * DEG_TO_RADS) * 5; // TODO: probably wrong equation used (cos is just for x-vel)
+        // player1.yv = sin(getAI_rot(AI_pos) * DEG_TO_RADS) * 5;
         player1.rot = getAI_rot(AI_pos);
 
-        player2.xv = cos(player1.rot * DEG_TO_RADS);
-        player2.yv = sin(player1.rot * DEG_TO_RADS);
+        // player2.xv = cos(player1.rot * DEG_TO_RADS);
+        // player2.yv = sin(player1.rot * DEG_TO_RADS);
       }
       // xpos[AI_pos] += cos(boat.rot* DEG_TO_RADS)*5;
       // ypos[AI_pos] += sin(boat.rot* DEG_TO_RADS)*5;
