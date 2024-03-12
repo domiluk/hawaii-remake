@@ -734,24 +734,23 @@ enum Scene game_loop()
 
     if (game_mode == MODE_MULTIPLAYER)
     {
-      blit(ostrov, vsetko, 0, 0, 0, 0, 2100, 1900);
-
-      // lava polka obrazovky
       center_camera_on_a_boat(&camera1, &player1);
-
-      rotate(player1.bmp, player1.bmp_rot, player1.rot + 90);
-      draw_sprite(vsetko, player1.bmp_rot, player1.x, player1.y);
-
-      // prava polka obrazovky
       center_camera_on_a_boat(&camera2, &player2);
 
-      rotate(player2.bmp, player2.bmp_rot, player2.rot + 90);
-      draw_sprite(vsetko, player2.bmp_rot, player2.x, player2.y);
+      blit(ostrov, camera1.mb, camera1.left, camera1.up, 0, 0, camera1.width, camera1.height);
+      blit(ostrov, camera2.mb, camera2.left, camera2.up, 0, 0, camera2.width, camera2.height);
 
-      // vykresli lavu a pravu polku z bitmapy vsetko
-      blit(vsetko, mb, camera1.left, camera1.up, 0, 0, 512, 768);
-      blit(vsetko, mb, camera2.left, camera2.up, 512, 0, 512, 768);
-      vline(mb, 512, 0, 768, makecol(rand() % 255, 0, 0));
+      rotate(player1.bmp, player1.bmp_rot, player1.rot + 90);
+      draw_sprite(camera1.mb, player1.bmp_rot, player1.x - camera1.left, player1.y - camera1.up);
+      draw_sprite(camera2.mb, player1.bmp_rot, player1.x - camera2.left, player1.y - camera2.up);
+
+      rotate(player2.bmp, player2.bmp_rot, player2.rot + 90);
+      draw_sprite(camera1.mb, player2.bmp_rot, player2.x - camera1.left, player2.y - camera1.up);
+      draw_sprite(camera2.mb, player2.bmp_rot, player2.x - camera2.left, player2.y - camera2.up);
+
+      blit(camera1.mb, mb, 0, 0, 0, 0, camera1.width, camera1.height);
+      blit(camera2.mb, mb, 0, 0, 512, 0, camera2.width, camera2.height);
+      vline(mb, 512, 0, 768, 0xFFFFFF);
     }
 
     if (game_mode == MODE_PRACTICE || game_mode == MODE_CAREER)
@@ -759,6 +758,7 @@ enum Scene game_loop()
       center_camera_on_a_boat(&camera, &player1);
 
       blit(ostrov, mb, camera.left, camera.up, 0, 0, camera.left + 1024, camera.up + 768);
+
       rotate(player1.bmp, player1.bmp_rot, player1.rot + 90);
       draw_sprite(mb, player1.bmp_rot, player1.x - camera.left, player1.y - camera.up);
     }
