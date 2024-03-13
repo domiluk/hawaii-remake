@@ -752,8 +752,7 @@ enum Scene game_loop()
       blit(camera2.mb, mb, 0, 0, 512, 0, camera2.width, camera2.height);
       vline(mb, 512, 0, 768, 0xFFFFFF);
     }
-
-    if (game_mode == MODE_PRACTICE || game_mode == MODE_CAREER)
+    else
     {
       center_camera_on_a_boat(&camera, &player1);
 
