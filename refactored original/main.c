@@ -655,6 +655,41 @@ void check_boat_collisions(BOAT *player)
   }
 }
 
+void check_boat_to_boat_collision()
+{
+  int boats_distance_less_than_90 = ((player1.x - player2.x) * (player1.x - player2.x)) + ((player1.y - player2.y) * (player1.y - player2.y)) <= 90 * 90;
+  if (boats_distance_less_than_90)
+  {
+    // player1.xv = -getAI_xres(AI_pos)/3;
+    // player1.yv = getAI_yres(AI_pos)/3;
+    stop_sample(spring);
+    play_sample(spring, 255, 128, 1000, 0);
+    if (game_mode == MODE_MULTIPLAYER)
+    {
+      float temp;
+      temp = player1.rot;
+      player1.rot = player2.rot;
+      player2.rot = temp;
+
+      temp = player1.v;
+      player1.v = player2.v;
+      player2.v = temp;
+    }
+    if (game_mode == MODE_CAREER)
+    {
+      player1.v = cos(getAI_rot(AI_pos) * DEG_TO_RADS) * 5; // TODO: probably wrong equation used (cos is just for x-vel)
+      // player1.yv = sin(getAI_rot(AI_pos) * DEG_TO_RADS) * 5;
+      player1.rot = getAI_rot(AI_pos);
+
+      // player2.xv = cos(player1.rot * DEG_TO_RADS);
+      // player2.yv = sin(player1.rot * DEG_TO_RADS);
+    }
+    // xpos[AI_pos] += cos(boat.rot* DEG_TO_RADS)*5;
+    // ypos[AI_pos] += sin(boat.rot* DEG_TO_RADS)*5;
+    // calc_AI();
+  }
+}
+
 void slow_down(BOAT *player)
 {
   // TODO: ???????? probably: add something like else: player.v = 0
@@ -732,6 +767,9 @@ enum Scene game_loop()
       movement(&player2);
     }
 
+    if (game_mode != MODE_PRACTICE)
+      check_boat_to_boat_collision();
+
     if (game_mode == MODE_MULTIPLAYER)
     {
       center_camera_on_a_boat(&camera1, &player1);
@@ -778,38 +816,6 @@ enum Scene game_loop()
       }
       rotate(player2.bmp, player2.bmp_rot, player2.rot);
       draw_sprite(mb, player2.bmp_rot, player2.x - camera.left, player2.y - camera.up);
-    }
-
-    int boats_distance_less_than_90 = ((player1.x - player2.x) * (player1.x - player2.x)) + ((player1.y - player2.y) * (player1.y - player2.y)) <= 90 * 90;
-    if (boats_distance_less_than_90)
-    {
-      // player1.xv = -getAI_xres(AI_pos)/3;
-      // player1.yv = getAI_yres(AI_pos)/3;
-      stop_sample(spring);
-      play_sample(spring, 255, 128, 1000, 0);
-      if (game_mode == MODE_MULTIPLAYER)
-      {
-        float temp;
-        temp = player1.rot;
-        player1.rot = player2.rot;
-        player2.rot = temp;
-
-        temp = player1.v;
-        player1.v = player2.v;
-        player2.v = temp;
-      }
-      if (game_mode == MODE_CAREER)
-      {
-        player1.v = cos(getAI_rot(AI_pos) * DEG_TO_RADS) * 5; // TODO: probably wrong equation used (cos is just for x-vel)
-        // player1.yv = sin(getAI_rot(AI_pos) * DEG_TO_RADS) * 5;
-        player1.rot = getAI_rot(AI_pos);
-
-        // player2.xv = cos(player1.rot * DEG_TO_RADS);
-        // player2.yv = sin(player1.rot * DEG_TO_RADS);
-      }
-      // xpos[AI_pos] += cos(boat.rot* DEG_TO_RADS)*5;
-      // ypos[AI_pos] += sin(boat.rot* DEG_TO_RADS)*5;
-      // calc_AI();
     }
 
     if (game_mode == MODE_CAREER)
