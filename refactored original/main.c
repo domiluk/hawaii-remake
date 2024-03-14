@@ -767,6 +767,30 @@ enum Scene game_loop()
       movement(&player2);
     }
 
+    if (game_mode == MODE_CAREER)
+    {
+      player2.x = getAI_x(AI_pos);
+      player2.y = getAI_y(AI_pos);
+      player2.rot = getAI_rot(AI_pos);
+      if (player2.v > 0.2)
+      {
+        player2.x += player2.v;
+        player2.y += player2.v;
+        if (player2.v > player2.slowdown)
+          player2.v -= player2.slowdown;
+        if (player2.v < -player2.slowdown)
+          player2.v += player2.slowdown;
+      }
+
+      AI_pos += 3;
+      if (AI_pos == npts - 1)
+      {
+        AI_pos = 0;
+        // REFACTOR: DELETE LINE: curspl++;
+        player2.laps++;
+      }
+    }
+
     if (game_mode != MODE_PRACTICE)
       check_boat_to_boat_collision();
 
@@ -802,31 +826,8 @@ enum Scene game_loop()
 
     if (game_mode == MODE_CAREER)
     {
-      player2.x = getAI_x(AI_pos);
-      player2.y = getAI_y(AI_pos);
-      player2.rot = getAI_rot(AI_pos);
-      if (player2.v > 0.2)
-      {
-        player2.x += player2.v;
-        player2.y += player2.v;
-        if (player2.v > player2.slowdown)
-          player2.v -= player2.slowdown;
-        if (player2.v < -player2.slowdown)
-          player2.v += player2.slowdown;
-      }
-      rotate(player2.bmp, player2.bmp_rot, player2.rot);
+      rotate(player2.bmp, player2.bmp_rot, player2.rot); // TODO: preco tu nie je rot + 90??
       draw_sprite(mb, player2.bmp_rot, player2.x - camera.left, player2.y - camera.up);
-    }
-
-    if (game_mode == MODE_CAREER)
-    {
-      AI_pos += 3;
-      if (AI_pos == npts - 1)
-      {
-        AI_pos = 0;
-        // REFACTOR: DELETE LINE: curspl++;
-        player2.laps++;
-      }
     }
 
     draw_sprite(mb, panel, 512 - 100, 0);
