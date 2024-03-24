@@ -3,6 +3,9 @@
 #include <math.h>
 #include <stdio.h>
 
+#include "camera.h"
+#include "player.h"
+
 #define MODE_MULTIPLAYER 0
 #define MODE_CAREER 1
 #define MODE_PRACTICE 2
@@ -13,15 +16,6 @@
 #define ROTATE_AMOUNT 1.5
 
 void rotate(BITMAP *bmp, BITMAP *tmp, float angle);
-
-typedef struct
-{
-  int left;
-  int up;
-  int width;
-  int height;
-  BITMAP *mb;
-} CAMERA;
 
 CAMERA camera, camera1, camera2;
 BITMAP *ostrov, *vsetko;
@@ -54,32 +48,6 @@ enum Scene options_menu_loop();
 enum Scene credits_menu_loop();
 enum Scene game_loop();
 enum Scene game_over_loop();
-
-typedef struct boat
-{
-  float x;
-  float y;
-  float v;
-  float rot;
-  float maxspeed; // TODO: should not be in boat
-  float speedup;  // TODO: should not be in boat
-  float slowdown; // TODO: should not be in boat
-  int laps;
-  int checkpoint_one;
-  int checkpoint_two;
-  int checkpoint_three;
-  int last_lap_sec;
-  int best_lap_sec;
-  int last_lap_min;
-  int best_lap_min;
-  int AI;
-  int key_forwards;
-  int key_backwards;
-  int key_turn_left;
-  int key_turn_right;
-  BITMAP *bmp;
-  BITMAP *bmp_rot;
-} BOAT;
 
 BOAT player1, player2;
 BITMAP *mb, *menu;
@@ -233,63 +201,8 @@ int main()
   mb = create_bitmap(SCREEN_W, SCREEN_H);
   vsetko = create_bitmap(2100, 1900);
 
-  camera.left = 0;
-  camera.up = 0;
-  camera.width = SCREEN_W;
-  camera.height = SCREEN_H;
-  camera.mb = create_bitmap(camera.width, camera.height);
-
-  camera1.left = 0;
-  camera1.up = 0;
-  camera1.width = 512;
-  camera1.height = 768;
-  camera1.mb = create_bitmap(camera1.width, camera1.height);
-
-  camera2.left = 0;
-  camera2.up = 0;
-  camera2.width = 512;
-  camera2.height = 768;
-  camera2.mb = create_bitmap(camera2.width, camera2.height);
-
-  player1.x = 996 - 100;
-  player1.y = 1025 - 100;
-  player1.laps = 0;
-  player1.checkpoint_one = 0;
-  player1.checkpoint_two = 0;
-  player1.checkpoint_three = 0;
-  player1.v = 0;
-  player1.rot = -50;
-  player1.last_lap_sec = 0;
-  player1.last_lap_min = 0;
-  player1.best_lap_sec = 99;
-  player1.best_lap_min = 99;
-  player1.maxspeed = 10;
-  player1.speedup = 0.05;
-  player1.slowdown = 0.08;
-  player1.key_forwards = KEY_UP;
-  player1.key_backwards = KEY_DOWN;
-  player1.key_turn_left = KEY_LEFT;
-  player1.key_turn_right = KEY_RIGHT;
-
-  player2.x = 1105 - 100;
-  player2.y = 1087 - 100;
-  player2.laps = 0;
-  player2.checkpoint_one = 0;
-  player2.checkpoint_two = 0;
-  player2.checkpoint_three = 0;
-  player2.v = 0;
-  player2.rot = -75;
-  player2.last_lap_sec = 0;
-  player2.last_lap_min = 0;
-  player2.best_lap_sec = 99;
-  player2.best_lap_min = 99;
-  player2.maxspeed = 10;
-  player2.speedup = 0.05;
-  player2.slowdown = 0.08;
-  player2.key_forwards = KEY_W;
-  player2.key_backwards = KEY_S;
-  player2.key_turn_left = KEY_A;
-  player2.key_turn_right = KEY_D;
+  init_cameras();
+  init_players();
 
   white_point_bmp = create_bitmap(100, 100);
   clear_bitmap(white_point_bmp);
@@ -299,10 +212,6 @@ int main()
   rotated_white_point_bmp = create_bitmap(100, 100);
   clear_bitmap(rotated_white_point_bmp);
 
-  player1.bmp = load_bitmap("lodcervena.bmp", NULL);
-  player1.bmp_rot = load_bitmap("lodcervena.bmp", NULL);
-  player2.bmp = load_bitmap("lodzelena.bmp", NULL);
-  player2.bmp_rot = load_bitmap("lodzelena.bmp", NULL);
   ostrov = load_bitmap("ostrov1.bmp", NULL);
   alpha = load_bitmap("alpha1.bmp", NULL);
   menu = load_bitmap("menu.bmp", NULL);
@@ -729,21 +638,6 @@ void game_init()
 void game_deinit()
 {
   remove_int(mooove_time);
-}
-
-void center_camera_on_a_boat(CAMERA *camera, const BOAT *player)
-{
-  camera->left = player->x - camera->width / 2;
-  camera->up = player->y - camera->height / 2;
-
-  if (camera->left < 0)
-    camera->left = 0;
-  if (camera->up < 0)
-    camera->up = 0;
-  if (camera->left > (ostrov->w - camera->width))
-    camera->left = ostrov->w - camera->width;
-  if (camera->up > (ostrov->h - camera->height))
-    camera->up = ostrov->h - camera->height;
 }
 
 enum Scene game_loop()
