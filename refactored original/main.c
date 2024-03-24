@@ -49,6 +49,9 @@ enum Scene credits_menu_loop();
 enum Scene game_loop();
 enum Scene game_over_loop();
 
+void game_init();
+void game_deinit();
+
 BOAT player1, player2;
 BITMAP *mb, *menu;
 
@@ -224,10 +227,11 @@ int main()
 
   play_sample(main_sample, 255, 128, 1000, 1);
 
-  enum Scene next_scene = MAIN_MENU;
+  enum Scene scene = MAIN_MENU;
+  enum Scene next_scene;
   while (1)
   {
-    switch (next_scene)
+    switch (scene)
     {
     case MAIN_MENU:
       next_scene = main_menu_loop();
@@ -251,6 +255,17 @@ int main()
       printf("smrt blenderu");
       exit(0);
     }
+
+    int changing_scenes = next_scene != scene;
+    if (changing_scenes)
+    {
+      if (next_scene == GAME)
+        game_init();
+      else if (scene == GAME)
+        game_deinit();
+    }
+
+    scene = next_scene;
   }
 }
 END_OF_MAIN()
@@ -634,110 +649,106 @@ void game_deinit()
 
 enum Scene game_loop()
 {
-  game_init();
-  while (!key[KEY_ESC])
+  if (key[KEY_ESC])
+    return MAIN_MENU;
+
+  int somebody_won = player1.laps == winning_laps || player2.laps == winning_laps;
+  if (somebody_won)
+    return GAME_OVER;
+
+  check_boat_collisions(&player1);
+  movement(&player1);
+
+  if (game_mode == MODE_MULTIPLAYER)
   {
-    int somebody_won = player1.laps == winning_laps || player2.laps == winning_laps;
-    if (somebody_won)
-    {
-      game_deinit();
-      return GAME_OVER;
-    }
-
-    check_boat_collisions(&player1);
-    movement(&player1);
-
-    if (game_mode == MODE_MULTIPLAYER)
-    {
-      check_boat_collisions(&player2);
-      movement(&player2);
-    }
-
-    if (game_mode == MODE_CAREER)
-    {
-      player2.x = getAI_x(AI_pos);
-      player2.y = getAI_y(AI_pos);
-      player2.rot = getAI_rot(AI_pos);
-      if (player2.v > 0.2)
-      {
-        player2.x += player2.v;
-        player2.y += player2.v;
-        if (player2.v > player2.slowdown)
-          player2.v -= player2.slowdown;
-        if (player2.v < -player2.slowdown)
-          player2.v += player2.slowdown;
-      }
-
-      AI_pos += 3;
-      if (AI_pos == npts - 1)
-      {
-        AI_pos = 0;
-        // REFACTOR: DELETE LINE: curspl++;
-        player2.laps++;
-      }
-    }
-
-    if (game_mode != MODE_PRACTICE)
-      check_boat_to_boat_collision();
-
-    if (game_mode == MODE_MULTIPLAYER)
-    {
-      center_camera_on_a_boat(&camera1, &player1);
-      center_camera_on_a_boat(&camera2, &player2);
-
-      blit(ostrov, camera1.mb, camera1.left, camera1.up, 0, 0, camera1.width, camera1.height);
-      blit(ostrov, camera2.mb, camera2.left, camera2.up, 0, 0, camera2.width, camera2.height);
-
-      rotate(player1.bmp, player1.bmp_rot, player1.rot + 90);
-      draw_sprite(camera1.mb, player1.bmp_rot, player1.x - camera1.left, player1.y - camera1.up);
-      draw_sprite(camera2.mb, player1.bmp_rot, player1.x - camera2.left, player1.y - camera2.up);
-
-      rotate(player2.bmp, player2.bmp_rot, player2.rot + 90);
-      draw_sprite(camera1.mb, player2.bmp_rot, player2.x - camera1.left, player2.y - camera1.up);
-      draw_sprite(camera2.mb, player2.bmp_rot, player2.x - camera2.left, player2.y - camera2.up);
-
-      blit(camera1.mb, mb, 0, 0, 0, 0, camera1.width, camera1.height);
-      blit(camera2.mb, mb, 0, 0, 512, 0, camera2.width, camera2.height);
-      vline(mb, 512, 0, 768, 0xFFFFFF);
-    }
-    else
-    {
-      center_camera_on_a_boat(&camera, &player1);
-
-      blit(ostrov, mb, camera.left, camera.up, 0, 0, camera.left + 1024, camera.up + 768);
-
-      rotate(player1.bmp, player1.bmp_rot, player1.rot + 90);
-      draw_sprite(mb, player1.bmp_rot, player1.x - camera.left, player1.y - camera.up);
-    }
-
-    if (game_mode == MODE_CAREER)
-    {
-      rotate(player2.bmp, player2.bmp_rot, player2.rot); // TODO: preco tu nie je rot + 90??
-      draw_sprite(mb, player2.bmp_rot, player2.x - camera.left, player2.y - camera.up);
-    }
-
-    draw_sprite(mb, panel, 512 - 100, 0);
-    alfont_set_font_size(pump, 75);
-    alfont_textprintf_centre_aa(mb, pump, 512, 0, 0xFFFFFF, ":");
-    alfont_textprintf_centre_aa(mb, pump, 555, 0, 0xFFFFFF, "%d", global_sec);
-    alfont_textprintf_centre_aa(mb, pump, 472, 0, 0xFFFFFF, "%d", global_min);
-    alfont_set_font_size(pump, 20);
-    alfont_textprintf_centre_aa(mb, pump, 512, 70, 0xFFFFFF, "powered by DL games");
-    alfont_set_font_size(pump, 35);
-    alfont_textprintf_aa(mb, pump, 20, 10, 0, "Laps %d", player1.laps);
-    alfont_textprintf_aa(mb, pump, 20, 40, 0, "Last lap time %d:%d", player1.last_lap_min, player1.last_lap_sec);
-    alfont_textprintf_aa(mb, pump, 20, 70, 0, "Best lap time %d:%d", player1.best_lap_min, player1.best_lap_sec);
-
-    if (game_mode == MODE_MULTIPLAYER)
-    {
-      alfont_textprintf_aa(mb, pump, 810, 10, 0, "Laps %d", player2.laps);
-      alfont_textprintf_aa(mb, pump, 810, 40, 0, "Last lap time %d:%d", player2.last_lap_min, player2.last_lap_sec);
-      alfont_textprintf_aa(mb, pump, 810, 70, 0, "Best lap time %d:%d", player2.best_lap_min, player2.best_lap_sec);
-    }
-
-    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
+    check_boat_collisions(&player2);
+    movement(&player2);
   }
-  return EXIT;
+
+  if (game_mode == MODE_CAREER)
+  {
+    player2.x = getAI_x(AI_pos);
+    player2.y = getAI_y(AI_pos);
+    player2.rot = getAI_rot(AI_pos);
+    if (player2.v > 0.2)
+    {
+      player2.x += player2.v;
+      player2.y += player2.v;
+      if (player2.v > player2.slowdown)
+        player2.v -= player2.slowdown;
+      if (player2.v < -player2.slowdown)
+        player2.v += player2.slowdown;
+    }
+
+    AI_pos += 3;
+    if (AI_pos == npts - 1)
+    {
+      AI_pos = 0;
+      // REFACTOR: DELETE LINE: curspl++;
+      player2.laps++;
+    }
+  }
+
+  if (game_mode != MODE_PRACTICE)
+    check_boat_to_boat_collision();
+
+  if (game_mode == MODE_MULTIPLAYER)
+  {
+    center_camera_on_a_boat(&camera1, &player1);
+    center_camera_on_a_boat(&camera2, &player2);
+
+    blit(ostrov, camera1.mb, camera1.left, camera1.up, 0, 0, camera1.width, camera1.height);
+    blit(ostrov, camera2.mb, camera2.left, camera2.up, 0, 0, camera2.width, camera2.height);
+
+    rotate(player1.bmp, player1.bmp_rot, player1.rot + 90);
+    draw_sprite(camera1.mb, player1.bmp_rot, player1.x - camera1.left, player1.y - camera1.up);
+    draw_sprite(camera2.mb, player1.bmp_rot, player1.x - camera2.left, player1.y - camera2.up);
+
+    rotate(player2.bmp, player2.bmp_rot, player2.rot + 90);
+    draw_sprite(camera1.mb, player2.bmp_rot, player2.x - camera1.left, player2.y - camera1.up);
+    draw_sprite(camera2.mb, player2.bmp_rot, player2.x - camera2.left, player2.y - camera2.up);
+
+    blit(camera1.mb, mb, 0, 0, 0, 0, camera1.width, camera1.height);
+    blit(camera2.mb, mb, 0, 0, 512, 0, camera2.width, camera2.height);
+    vline(mb, 512, 0, 768, 0xFFFFFF);
+  }
+  else
+  {
+    center_camera_on_a_boat(&camera, &player1);
+
+    blit(ostrov, mb, camera.left, camera.up, 0, 0, camera.left + 1024, camera.up + 768);
+
+    rotate(player1.bmp, player1.bmp_rot, player1.rot + 90);
+    draw_sprite(mb, player1.bmp_rot, player1.x - camera.left, player1.y - camera.up);
+  }
+
+  if (game_mode == MODE_CAREER)
+  {
+    rotate(player2.bmp, player2.bmp_rot, player2.rot); // TODO: preco tu nie je rot + 90??
+    draw_sprite(mb, player2.bmp_rot, player2.x - camera.left, player2.y - camera.up);
+  }
+
+  draw_sprite(mb, panel, 512 - 100, 0);
+  alfont_set_font_size(pump, 75);
+  alfont_textprintf_centre_aa(mb, pump, 512, 0, 0xFFFFFF, ":");
+  alfont_textprintf_centre_aa(mb, pump, 555, 0, 0xFFFFFF, "%d", global_sec);
+  alfont_textprintf_centre_aa(mb, pump, 472, 0, 0xFFFFFF, "%d", global_min);
+  alfont_set_font_size(pump, 20);
+  alfont_textprintf_centre_aa(mb, pump, 512, 70, 0xFFFFFF, "powered by DL games");
+  alfont_set_font_size(pump, 35);
+  alfont_textprintf_aa(mb, pump, 20, 10, 0, "Laps %d", player1.laps);
+  alfont_textprintf_aa(mb, pump, 20, 40, 0, "Last lap time %d:%d", player1.last_lap_min, player1.last_lap_sec);
+  alfont_textprintf_aa(mb, pump, 20, 70, 0, "Best lap time %d:%d", player1.best_lap_min, player1.best_lap_sec);
+
+  if (game_mode == MODE_MULTIPLAYER)
+  {
+    alfont_textprintf_aa(mb, pump, 810, 10, 0, "Laps %d", player2.laps);
+    alfont_textprintf_aa(mb, pump, 810, 40, 0, "Last lap time %d:%d", player2.last_lap_min, player2.last_lap_sec);
+    alfont_textprintf_aa(mb, pump, 810, 70, 0, "Best lap time %d:%d", player2.best_lap_min, player2.best_lap_sec);
+  }
+
+  blit(mb, screen, 0, 0, 0, 0, 1024, 768);
+  return GAME;
 }
 
 enum Scene game_over_loop()
