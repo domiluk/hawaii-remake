@@ -351,156 +351,150 @@ enum Scene main_menu_loop()
 
 enum Scene play_menu_loop()
 {
-  while (1)
-  {
-    show_mouse(NULL);
-    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
-    alfont_set_font_size(pump, 50);
+  show_mouse(NULL);
+  blit(menu, mb, 0, 0, 0, 0, 1024, 768);
+  alfont_set_font_size(pump, 50);
 
-    alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
+  alfont_textprintf_centre_aa(mb, pump, 211, 608, 0xFFFFFF, "Play");
 
-    if (exit_button())
-      return EXIT;
+  if (exit_button())
+    return EXIT;
 
-    alfont_set_font_size(pump, 35);
+  alfont_set_font_size(pump, 35);
 
-    if (options_button())
-      return OPTIONS_MENU;
+  if (options_button())
+    return OPTIONS_MENU;
 
-    if (credits_button())
-      return CREDITS_MENU;
+  if (credits_button())
+    return CREDITS_MENU;
 
-    alfont_set_font_size(pump, 60);
+  alfont_set_font_size(pump, 60);
 
-    if (career_button())
-      return GAME;
+  if (career_button())
+    return GAME;
 
-    if (practice_button())
-      return GAME;
+  if (practice_button())
+    return GAME;
 
-    if (multiplayer_button())
-      return GAME;
+  if (multiplayer_button())
+    return GAME;
 
-    alfont_set_font_size(pump, 75);
-    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
-    show_mouse(mb);
-    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
-  }
+  alfont_set_font_size(pump, 75);
+  alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
+  show_mouse(mb);
+  blit(mb, screen, 0, 0, 0, 0, 1024, 768);
+  return PLAY_MENU;
 }
 
 enum Scene options_menu_loop()
 {
-  while (1)
-  {
-    show_mouse(NULL);
-    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
-    alfont_set_font_size(pump, 50);
+  show_mouse(NULL);
+  blit(menu, mb, 0, 0, 0, 0, 1024, 768);
+  alfont_set_font_size(pump, 50);
 
-    if (play_button())
-      return PLAY_MENU;
+  if (play_button())
+    return PLAY_MENU;
 
-    if (exit_button())
-      return EXIT;
+  if (exit_button())
+    return EXIT;
 
-    alfont_set_font_size(pump, 35);
+  alfont_set_font_size(pump, 35);
 
-    alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
+  alfont_textprintf_centre_aa(mb, pump, 357, 608, 0xFFFFFF, "Options");
 
-    if (credits_button())
-      return CREDITS_MENU;
+  if (credits_button())
+    return CREDITS_MENU;
 
-    alfont_set_font_size(pump, 32);
-    alfont_textout_centre_aa(mb, pump, "IN GAME OPTIONS", 764, 20, 0xFFFFFF);
-    alfont_textout_centre_aa(mb, pump, "SETTINGS", 764, 290, 0xFFFFFF);
+  alfont_set_font_size(pump, 32);
+  alfont_textout_centre_aa(mb, pump, "IN GAME OPTIONS", 764, 20, 0xFFFFFF);
+  alfont_textout_centre_aa(mb, pump, "SETTINGS", 764, 290, 0xFFFFFF);
 
-    alfont_set_font_size(pump, 30);
-    alfont_textout_centre_aa(mb, pump, "Number of laps", 700, 60, 0);
-    if (checkbox("3", 800, 60, (nlaps == 3)))
-      nlaps = 3;
-    if (checkbox("5", 855, 60, (nlaps == 5)))
-      nlaps = 5;
-    if (checkbox("7", 910, 60, (nlaps == 7)))
-      nlaps = 7;
+  alfont_set_font_size(pump, 30);
+  alfont_textout_centre_aa(mb, pump, "Number of laps", 700, 60, 0);
+  if (checkbox("3", 800, 60, (nlaps == 3)))
+    nlaps = 3;
+  if (checkbox("5", 855, 60, (nlaps == 5)))
+    nlaps = 5;
+  if (checkbox("7", 910, 60, (nlaps == 7)))
+    nlaps = 7;
 
-    alfont_textout_centre_aa(mb, pump, "Color of Player's boat", 700, 90, 0);
-    if (checkbox("Red", 800, 90, (player1_boat_color == 0)))
-      player1_boat_color = 0;
-    if (checkbox("Green", 800, 120, (player1_boat_color == 1)))
-      player1_boat_color = 1;
-    if (checkbox("Blue", 800, 150, (player1_boat_color == 2)))
-      player1_boat_color = 2;
+  alfont_textout_centre_aa(mb, pump, "Color of Player's boat", 700, 90, 0);
+  if (checkbox("Red", 800, 90, (player1_boat_color == 0)))
+    player1_boat_color = 0;
+  if (checkbox("Green", 800, 120, (player1_boat_color == 1)))
+    player1_boat_color = 1;
+  if (checkbox("Blue", 800, 150, (player1_boat_color == 2)))
+    player1_boat_color = 2;
 
-    alfont_textout_centre_aa(mb, pump, "Color of CPU's boat", 700, 190, 0);
-    if (checkbox("Red", 800, 190, (player2_boat_color == 0)))
-      player2_boat_color = 0;
-    if (checkbox("Green", 800, 220, (player2_boat_color == 1)))
-      player2_boat_color = 1;
-    if (checkbox("Blue", 800, 250, (player2_boat_color == 2)))
-      player2_boat_color = 2;
+  alfont_textout_centre_aa(mb, pump, "Color of CPU's boat", 700, 190, 0);
+  if (checkbox("Red", 800, 190, (player2_boat_color == 0)))
+    player2_boat_color = 0;
+  if (checkbox("Green", 800, 220, (player2_boat_color == 1)))
+    player2_boat_color = 1;
+  if (checkbox("Blue", 800, 250, (player2_boat_color == 2)))
+    player2_boat_color = 2;
 
-    alfont_textout_centre_aa(mb, pump, "Resolution", 700, 330, 0);
-    if (checkbox("800x600", 800, 330, (res == 0)))
-      res = 0;
-    if (checkbox("1024x768", 800, 360, (res == 1)))
-      res = 1;
-    if (checkbox("1280x1024", 800, 390, (res == 2)))
-      res = 2;
+  alfont_textout_centre_aa(mb, pump, "Resolution", 700, 330, 0);
+  if (checkbox("800x600", 800, 330, (res == 0)))
+    res = 0;
+  if (checkbox("1024x768", 800, 360, (res == 1)))
+    res = 1;
+  if (checkbox("1280x1024", 800, 390, (res == 2)))
+    res = 2;
 
-    alfont_textout_centre_aa(mb, pump, "Color Depth", 700, 420, 0);
-    if (checkbox("16", 800, 420, (depth == 0)))
-      depth = 0;
-    if (checkbox("24", 800, 450, (depth == 1)))
-      depth = 1;
-    if (checkbox("32", 800, 480, (depth == 2)))
-      depth = 2;
+  alfont_textout_centre_aa(mb, pump, "Color Depth", 700, 420, 0);
+  if (checkbox("16", 800, 420, (depth == 0)))
+    depth = 0;
+  if (checkbox("24", 800, 450, (depth == 1)))
+    depth = 1;
+  if (checkbox("32", 800, 480, (depth == 2)))
+    depth = 2;
 
-    alfont_textout_centre_aa(mb, pump, "Volume", 700, 510, 0);
-    if (checkbox("Mute", 800, 510, (vol == 0)))
-      vol = 0;
-    if (checkbox("Normal", 800, 540, (vol == 1)))
-      vol = 1;
-    if (checkbox("Loud", 800, 570, (vol == 2)))
-      vol = 2;
+  alfont_textout_centre_aa(mb, pump, "Volume", 700, 510, 0);
+  if (checkbox("Mute", 800, 510, (vol == 0)))
+    vol = 0;
+  if (checkbox("Normal", 800, 540, (vol == 1)))
+    vol = 1;
+  if (checkbox("Loud", 800, 570, (vol == 2)))
+    vol = 2;
 
-    alfont_set_font_size(pump, 75);
-    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
+  alfont_set_font_size(pump, 75);
+  alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
 
-    show_mouse(mb);
-    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
-  }
+  show_mouse(mb);
+  blit(mb, screen, 0, 0, 0, 0, 1024, 768);
+  return OPTIONS_MENU;
 }
 
 enum Scene credits_menu_loop()
 {
-  while (1)
-  {
-    show_mouse(NULL);
-    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
-    alfont_set_font_size(pump, 50);
+  show_mouse(NULL);
+  blit(menu, mb, 0, 0, 0, 0, 1024, 768);
+  alfont_set_font_size(pump, 50);
 
-    if (play_button())
-      return PLAY_MENU;
+  if (play_button())
+    return PLAY_MENU;
 
-    if (exit_button())
-      return EXIT;
+  if (exit_button())
+    return EXIT;
 
-    alfont_set_font_size(pump, 35);
+  alfont_set_font_size(pump, 35);
 
-    if (options_button())
-      return OPTIONS_MENU;
+  if (options_button())
+    return OPTIONS_MENU;
 
-    alfont_textprintf_centre_aa(mb, pump, 586, 608, 0xFFFFFF, "Credits");
+  alfont_textprintf_centre_aa(mb, pump, 586, 608, 0xFFFFFF, "Credits");
 
-    alfont_textprintf_centre_aa(mb, pump, 206, 417, 0, "Programming");
-    alfont_textprintf_centre_aa(mb, pump, 764, 417, 0, "Graphics");
-    alfont_set_font_size(pump, 70);
-    alfont_textprintf_centre_aa(mb, pump, 206, 437, 0, "Daniel Lovasko");
-    alfont_textprintf_centre_aa(mb, pump, 764, 437, 0, "Dominik Lukac");
-    alfont_set_font_size(pump, 75);
-    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
-    show_mouse(mb);
-    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
-  }
+  alfont_textprintf_centre_aa(mb, pump, 206, 417, 0, "Programming");
+  alfont_textprintf_centre_aa(mb, pump, 764, 417, 0, "Graphics");
+  alfont_set_font_size(pump, 70);
+  alfont_textprintf_centre_aa(mb, pump, 206, 437, 0, "Daniel Lovasko");
+  alfont_textprintf_centre_aa(mb, pump, 764, 437, 0, "Dominik Lukac");
+  alfont_set_font_size(pump, 75);
+  alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
+  show_mouse(mb);
+  blit(mb, screen, 0, 0, 0, 0, 1024, 768);
+  return CREDITS_MENU;
 }
 
 int get_boat_front_point_color_in_alpha(const BOAT *player)
