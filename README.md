@@ -24,3 +24,5 @@ How to compile the project on windows with the original workflow:
 - find out how game_loop works
 - move into game init function everything that gets inited so that the game can be played again
 - in "practice" (one player only) the player still collides with the second player
+- boats are not perfectly centered
+- todos in code

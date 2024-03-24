@@ -3,6 +3,9 @@
 #include <math.h>
 #include <stdio.h>
 
+#include "camera.h"
+#include "player.h"
+
 #define MODE_MULTIPLAYER 0
 #define MODE_CAREER 1
 #define MODE_PRACTICE 2
@@ -14,7 +17,7 @@
 
 void rotate(BITMAP *bmp, BITMAP *tmp, float angle);
 
-int camup1 = 0, camup2 = 0, camleft2 = 0, camleft1 = 0;
+CAMERA camera, camera1, camera2;
 BITMAP *ostrov, *vsetko;
 BITMAP *alpha;
 BITMAP *white_point_bmp, *rotated_white_point_bmp;
@@ -45,32 +48,6 @@ enum Scene options_menu_loop();
 enum Scene credits_menu_loop();
 enum Scene game_loop();
 enum Scene game_over_loop();
-
-typedef struct boat
-{
-  float x;
-  float y;
-  float v;
-  float rot;
-  float maxspeed; // TODO: should not be in boat
-  float speedup;  // TODO: should not be in boat
-  float slowdown; // TODO: should not be in boat
-  int laps;
-  int checkpoint_one;
-  int checkpoint_two;
-  int checkpoint_three;
-  int last_lap_sec;
-  int best_lap_sec;
-  int last_lap_min;
-  int best_lap_min;
-  int AI;
-  int key_forwards;
-  int key_backwards;
-  int key_turn_left;
-  int key_turn_right;
-  BITMAP *bmp;
-  BITMAP *bmp_rot;
-} BOAT;
 
 BOAT player1, player2;
 BITMAP *mb, *menu;
@@ -224,45 +201,8 @@ int main()
   mb = create_bitmap(SCREEN_W, SCREEN_H);
   vsetko = create_bitmap(2100, 1900);
 
-  player1.x = 996 - 100;
-  player1.y = 1025 - 100;
-  player1.laps = 0;
-  player1.checkpoint_one = 0;
-  player1.checkpoint_two = 0;
-  player1.checkpoint_three = 0;
-  player1.v = 0;
-  player1.rot = -50;
-  player1.last_lap_sec = 0;
-  player1.last_lap_min = 0;
-  player1.best_lap_sec = 99;
-  player1.best_lap_min = 99;
-  player1.maxspeed = 10;
-  player1.speedup = 0.05;
-  player1.slowdown = 0.08;
-  player1.key_forwards = KEY_UP;
-  player1.key_backwards = KEY_DOWN;
-  player1.key_turn_left = KEY_LEFT;
-  player1.key_turn_right = KEY_RIGHT;
-
-  player2.x = 1105 - 100;
-  player2.y = 1087 - 100;
-  player2.laps = 0;
-  player2.checkpoint_one = 0;
-  player2.checkpoint_two = 0;
-  player2.checkpoint_three = 0;
-  player2.v = 0;
-  player2.rot = -75;
-  player2.last_lap_sec = 0;
-  player2.last_lap_min = 0;
-  player2.best_lap_sec = 99;
-  player2.best_lap_min = 99;
-  player2.maxspeed = 10;
-  player2.speedup = 0.05;
-  player2.slowdown = 0.08;
-  player2.key_forwards = KEY_W;
-  player2.key_backwards = KEY_S;
-  player2.key_turn_left = KEY_A;
-  player2.key_turn_right = KEY_D;
+  init_cameras();
+  init_players();
 
   white_point_bmp = create_bitmap(100, 100);
   clear_bitmap(white_point_bmp);
@@ -272,10 +212,6 @@ int main()
   rotated_white_point_bmp = create_bitmap(100, 100);
   clear_bitmap(rotated_white_point_bmp);
 
-  player1.bmp = load_bitmap("lodcervena.bmp", NULL);
-  player1.bmp_rot = load_bitmap("lodcervena.bmp", NULL);
-  player2.bmp = load_bitmap("lodzelena.bmp", NULL);
-  player2.bmp_rot = load_bitmap("lodzelena.bmp", NULL);
   ostrov = load_bitmap("ostrov1.bmp", NULL);
   alpha = load_bitmap("alpha1.bmp", NULL);
   menu = load_bitmap("menu.bmp", NULL);
@@ -626,6 +562,41 @@ void check_boat_collisions(BOAT *player)
   }
 }
 
+void check_boat_to_boat_collision()
+{
+  int boats_distance_less_than_90 = ((player1.x - player2.x) * (player1.x - player2.x)) + ((player1.y - player2.y) * (player1.y - player2.y)) <= 90 * 90;
+  if (boats_distance_less_than_90)
+  {
+    // player1.xv = -getAI_xres(AI_pos)/3;
+    // player1.yv = getAI_yres(AI_pos)/3;
+    stop_sample(spring);
+    play_sample(spring, 255, 128, 1000, 0);
+    if (game_mode == MODE_MULTIPLAYER)
+    {
+      float temp;
+      temp = player1.rot;
+      player1.rot = player2.rot;
+      player2.rot = temp;
+
+      temp = player1.v;
+      player1.v = player2.v;
+      player2.v = temp;
+    }
+    if (game_mode == MODE_CAREER)
+    {
+      player1.v = cos(getAI_rot(AI_pos) * DEG_TO_RADS) * 5; // TODO: probably wrong equation used (cos is just for x-vel)
+      // player1.yv = sin(getAI_rot(AI_pos) * DEG_TO_RADS) * 5;
+      player1.rot = getAI_rot(AI_pos);
+
+      // player2.xv = cos(player1.rot * DEG_TO_RADS);
+      // player2.yv = sin(player1.rot * DEG_TO_RADS);
+    }
+    // xpos[AI_pos] += cos(boat.rot* DEG_TO_RADS)*5;
+    // ypos[AI_pos] += sin(boat.rot* DEG_TO_RADS)*5;
+    // calc_AI();
+  }
+}
+
 void slow_down(BOAT *player)
 {
   // TODO: ???????? probably: add something like else: player.v = 0
@@ -688,67 +659,6 @@ enum Scene game_loop()
       movement(&player2);
     }
 
-    if (game_mode == MODE_MULTIPLAYER)
-    {
-      blit(ostrov, vsetko, 0, 0, 0, 0, 2100, 1900);
-
-      // lava polka obrazovky
-      camleft1 = player1.x - 256;
-      camup1 = player1.y - 384;
-
-      if (camleft1 < 0)
-        camleft1 = 0;
-      if (camup1 < 0)
-        camup1 = 0;
-      if (camup1 > (ostrov->h - 768))
-        camup1 = ostrov->h - 768;
-      if (camleft1 > (ostrov->w - 1024 + 512))
-        camleft1 = ostrov->w - 1024 + 512;
-
-      rotate(player1.bmp, player1.bmp_rot, player1.rot + 90);
-      draw_sprite(vsetko, player1.bmp_rot, player1.x, player1.y);
-
-      // prava polka obrazovky
-      camleft2 = player2.x - 256;
-      camup2 = player2.y - 384;
-
-      if (camleft2 < 0)
-        camleft2 = 0;
-      if (camup2 < 0)
-        camup2 = 0;
-      if (camup2 > (ostrov->h - 768))
-        camup2 = ostrov->h - 768;
-      if (camleft2 > (ostrov->w - 1024 + 512))
-        camleft2 = ostrov->w - 1024 + 512;
-
-      rotate(player2.bmp, player2.bmp_rot, player2.rot + 90);
-      draw_sprite(vsetko, player2.bmp_rot, player2.x, player2.y);
-
-      // vykresli lavu a pravu polku z bitmapy vsetko
-      blit(vsetko, mb, camleft1, camup1, 0, 0, 512, 768);
-      blit(vsetko, mb, camleft2, camup2, 512, 0, 512, 768);
-      vline(mb, 512, 0, 768, makecol(rand() % 255, 0, 0));
-    }
-
-    if (game_mode == MODE_PRACTICE || game_mode == MODE_CAREER)
-    {
-      camleft1 = player1.x - 512;
-      camup1 = player1.y - 384;
-
-      if (camleft1 < 0)
-        camleft1 = 0;
-      if (camup1 < 0)
-        camup1 = 0;
-      if (camup1 > (ostrov->h - 768))
-        camup1 = ostrov->h - 768;
-      if (camleft1 > (ostrov->w - 1024))
-        camleft1 = ostrov->w - 1024;
-
-      blit(ostrov, mb, camleft1, camup1, 0, 0, camleft1 + 1024, camup1 + 768);
-      rotate(player1.bmp, player1.bmp_rot, player1.rot + 90);
-      draw_sprite(mb, player1.bmp_rot, player1.x - camleft1, player1.y - camup1);
-    }
-
     if (game_mode == MODE_CAREER)
     {
       player2.x = getAI_x(AI_pos);
@@ -763,44 +673,7 @@ enum Scene game_loop()
         if (player2.v < -player2.slowdown)
           player2.v += player2.slowdown;
       }
-      rotate(player2.bmp, player2.bmp_rot, player2.rot);
-      draw_sprite(mb, player2.bmp_rot, player2.x - camleft1, player2.y - camup1);
-    }
 
-    int boats_distance_less_than_90 = ((player1.x - player2.x) * (player1.x - player2.x)) + ((player1.y - player2.y) * (player1.y - player2.y)) <= 90 * 90;
-    if (boats_distance_less_than_90)
-    {
-      // player1.xv = -getAI_xres(AI_pos)/3;
-      // player1.yv = getAI_yres(AI_pos)/3;
-      stop_sample(spring);
-      play_sample(spring, 255, 128, 1000, 0);
-      if (game_mode == MODE_MULTIPLAYER)
-      {
-        float temp;
-        temp = player1.rot;
-        player1.rot = player2.rot;
-        player2.rot = temp;
-
-        temp = player1.v;
-        player1.v = player2.v;
-        player2.v = temp;
-      }
-      if (game_mode == MODE_CAREER)
-      {
-        player1.v = cos(getAI_rot(AI_pos) * DEG_TO_RADS) * 5; // TODO: probably wrong equation used (cos is just for x-vel)
-        // player1.yv = sin(getAI_rot(AI_pos) * DEG_TO_RADS) * 5;
-        player1.rot = getAI_rot(AI_pos);
-
-        // player2.xv = cos(player1.rot * DEG_TO_RADS);
-        // player2.yv = sin(player1.rot * DEG_TO_RADS);
-      }
-      // xpos[AI_pos] += cos(boat.rot* DEG_TO_RADS)*5;
-      // ypos[AI_pos] += sin(boat.rot* DEG_TO_RADS)*5;
-      // calc_AI();
-    }
-
-    if (game_mode == MODE_CAREER)
-    {
       AI_pos += 3;
       if (AI_pos == npts - 1)
       {
@@ -808,6 +681,45 @@ enum Scene game_loop()
         // REFACTOR: DELETE LINE: curspl++;
         player2.laps++;
       }
+    }
+
+    if (game_mode != MODE_PRACTICE)
+      check_boat_to_boat_collision();
+
+    if (game_mode == MODE_MULTIPLAYER)
+    {
+      center_camera_on_a_boat(&camera1, &player1);
+      center_camera_on_a_boat(&camera2, &player2);
+
+      blit(ostrov, camera1.mb, camera1.left, camera1.up, 0, 0, camera1.width, camera1.height);
+      blit(ostrov, camera2.mb, camera2.left, camera2.up, 0, 0, camera2.width, camera2.height);
+
+      rotate(player1.bmp, player1.bmp_rot, player1.rot + 90);
+      draw_sprite(camera1.mb, player1.bmp_rot, player1.x - camera1.left, player1.y - camera1.up);
+      draw_sprite(camera2.mb, player1.bmp_rot, player1.x - camera2.left, player1.y - camera2.up);
+
+      rotate(player2.bmp, player2.bmp_rot, player2.rot + 90);
+      draw_sprite(camera1.mb, player2.bmp_rot, player2.x - camera1.left, player2.y - camera1.up);
+      draw_sprite(camera2.mb, player2.bmp_rot, player2.x - camera2.left, player2.y - camera2.up);
+
+      blit(camera1.mb, mb, 0, 0, 0, 0, camera1.width, camera1.height);
+      blit(camera2.mb, mb, 0, 0, 512, 0, camera2.width, camera2.height);
+      vline(mb, 512, 0, 768, 0xFFFFFF);
+    }
+    else
+    {
+      center_camera_on_a_boat(&camera, &player1);
+
+      blit(ostrov, mb, camera.left, camera.up, 0, 0, camera.left + 1024, camera.up + 768);
+
+      rotate(player1.bmp, player1.bmp_rot, player1.rot + 90);
+      draw_sprite(mb, player1.bmp_rot, player1.x - camera.left, player1.y - camera.up);
+    }
+
+    if (game_mode == MODE_CAREER)
+    {
+      rotate(player2.bmp, player2.bmp_rot, player2.rot); // TODO: preco tu nie je rot + 90??
+      draw_sprite(mb, player2.bmp_rot, player2.x - camera.left, player2.y - camera.up);
     }
 
     draw_sprite(mb, panel, 512 - 100, 0);
