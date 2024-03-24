@@ -388,31 +388,29 @@ int checkbox(const char *label, int x, int y, int checked)
 
 enum Scene main_menu_loop()
 {
-  while (1)
-  {
-    show_mouse(NULL);
-    blit(menu, mb, 0, 0, 0, 0, 1024, 768);
-    alfont_set_font_size(pump, 50);
+  show_mouse(NULL);
+  blit(menu, mb, 0, 0, 0, 0, 1024, 768);
+  alfont_set_font_size(pump, 50);
 
-    if (play_button())
-      return PLAY_MENU;
+  if (play_button())
+    return PLAY_MENU;
 
-    if (exit_button())
-      return EXIT;
+  if (exit_button())
+    return EXIT;
 
-    alfont_set_font_size(pump, 35);
+  alfont_set_font_size(pump, 35);
 
-    if (options_button())
-      return OPTIONS_MENU;
+  if (options_button())
+    return OPTIONS_MENU;
 
-    if (credits_button())
-      return CREDITS_MENU;
+  if (credits_button())
+    return CREDITS_MENU;
 
-    alfont_set_font_size(pump, 75);
-    alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
-    show_mouse(mb);
-    blit(mb, screen, 0, 0, 0, 0, 1024, 768);
-  }
+  alfont_set_font_size(pump, 75);
+  alfont_textprintf_centre_aa(mb, pump, 512, 100, 0, "Hawaii");
+  show_mouse(mb);
+  blit(mb, screen, 0, 0, 0, 0, 1024, 768);
+  return MAIN_MENU;
 }
 
 enum Scene play_menu_loop()
