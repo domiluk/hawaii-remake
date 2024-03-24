@@ -21,8 +21,9 @@ How to compile the project on windows with the original workflow:
 
 ## What to work on next:
 
+- remove inner while loop from game_loop
+  - what to do about the game_loop init and deinit?
 - find out how game_loop works
 - move into game init function everything that gets inited so that the game can be played again
-- in "practice" (one player only) the player still collides with the second player
 - boats are not perfectly centered
 - todos in code
