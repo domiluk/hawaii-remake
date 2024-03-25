@@ -18,7 +18,7 @@
 void rotate(BITMAP *bmp, BITMAP *tmp, float angle);
 
 CAMERA camera, camera1, camera2;
-BITMAP *ostrov, *vsetko;
+BITMAP *ostrov;
 BITMAP *alpha;
 BITMAP *white_point_bmp, *rotated_white_point_bmp;
 BITMAP *panel;
@@ -202,7 +202,6 @@ int main()
   pump = alfont_load_font("airstream.ttf");
 
   mb = create_bitmap(SCREEN_W, SCREEN_H);
-  vsetko = create_bitmap(2100, 1900);
 
   init_cameras();
   init_players();
