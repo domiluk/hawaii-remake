@@ -22,7 +22,7 @@ BITMAP *ostrov;
 BITMAP *alpha;
 BITMAP *white_point_bmp, *rotated_white_point_bmp;
 BITMAP *panel;
-SAMPLE *lap_gong, *spring, *main_sample;
+SAMPLE *lap_gong, *spring, *music;
 int game_mode;
 int global_sec;
 int global_min;
@@ -220,11 +220,11 @@ int main()
   panel = load_bitmap("panel.bmp", NULL);
   lap_gong = load_sample("sounds/dray.wav");
   spring = load_sample("sounds/spring.wav");
-  main_sample = load_sample("main.wav");
+  music = load_sample("main.wav");
 
   alfont_set_font_size(pump, 50);
 
-  play_sample(main_sample, 255, 128, 1000, 1);
+  play_sample(music, 255, 128, 1000, 1);
 
   enum Scene scene = MAIN_MENU;
   enum Scene next_scene;

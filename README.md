@@ -24,4 +24,5 @@ How to compile the project on windows with the original workflow:
 - find out how game_loop works
 - move into game init function everything that gets inited so that the game can be played again
 - boats are not perfectly centered
+- refactor the rotation of the white point bitmap - no need for the bitmap, just use rot function itself.
 - todos in code
